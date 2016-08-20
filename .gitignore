@@ -1,0 +1,8 @@
+# ignore
+Binaries/
+DerivedDataCache/
+Intermediate/
+Saved/
+*.suo
+*.sdf
+*.VC.db
