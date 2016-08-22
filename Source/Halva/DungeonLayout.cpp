@@ -176,12 +176,39 @@ FVector DungeonLayout::GetDungeonDimensions()
 *	void SetDungeonDimensions(FVector DungeonDimensions)
 *		Purpose:	Setter.
 *
-*		Changes: m_DungeonLayout - The 2D array is resized to match the new dungeon dimensions. If data
+*		Changes: m_dungeonLayout - The 2D array is resized to match the new dungeon dimensions. If data
 *								   was held it is lost upon resizing. All values will be set to empty.
 **********************************************************************************************************/
 void DungeonLayout::SetDungeonDimensions(FVector DungeonDimensions)
 {
+	// Clear m_dungeonLayout.
+	if (m_dungeonLayout != nullptr)
+	{
+		int rows = m_dungeonDimensions.Y;
 
+		for (int i = 0; i < rows; i++)
+		{
+			if (m_dungeonLayout[i] != nullptr)
+				delete[] m_dungeonLayout[i];
+		}
+
+		delete[] m_dungeonLayout;
+		m_dungeonLayout = nullptr;
+	}
+
+	// Set new size.
+	m_dungeonDimensions = DungeonDimensions;
+
+	//Rebuild dungeonLayout.
+	m_dungeonLayout = new TileData *[m_dungeonDimensions.Y];
+
+	for (int i = 0; i < m_dungeonDimensions.Y; i++)
+	{
+		m_dungeonLayout[i] = new TileData[m_dungeonDimensions.X];
+	}
+
+	// Initialize
+	ClearDungeonLayout();
 }
 /**********************************************************************************************************
 *	FVector GetMinimumRoomSize()
@@ -278,7 +305,22 @@ void DungeonLayout::GeneratePaths()
 **********************************************************************************************************/
 void DungeonLayout::CreateRoomLayout()
 {
+	ClearDungeonLayout();
 
+	int roomCount = m_rooms.Num();
+	
+	// Mark all tiles inside rooms as floor tiles.
+	for (int i = 0; i < roomCount; i++)
+	{
+		CreateFloorQuad(m_rooms[i]);
+	}
+
+	int pathCount = m_paths.Num();
+
+	for (int i = 0; i < pathCount; i++)
+	{
+		CreateFloorQuad(m_paths[i]);
+	}
 }
 
 void DungeonLayout::CreateSpecialTiles()
@@ -888,6 +930,7 @@ bool DungeonLayout::GenerateLBendPathWithKnownOrientation(Quad Room1, Quad Room2
 *					The path can either be direct or indirect but each set will be reachable through
 *					one of the siblings. This process is repeated down the tree connecting all sets of
 *					sibling nodes.
+*
 *		Parameters:
 *			QuadTreeNode * CurrentNode
 *				The highest level of the tree to connect siblings at.
@@ -987,6 +1030,7 @@ void DungeonLayout::GeneratePathsRecursive(QuadTreeNode * CurrentNode)
 *		Purpose:	Searches the tree passed in at parent node for the room that is closest to the point
 *					passed in. The distance to the point is calculated at the center of each edge. This
 *					is to ensure that room size does not affect distance to the point.
+*
 *		Parameters:
 *			QuadTreeNode * ParentNode
 *				The tree to find rooms in.
@@ -1039,6 +1083,7 @@ Quad * DungeonLayout::FindClosestRoom(QuadTreeNode * ParentNode, FVector Point)
 /**********************************************************************************************************
 *	FVector FindCenterOfClosestEdge(Quad Room, FVector Point)
 *		Purpose:	Finds the center of the edge of the quad closest to the point and returns it.
+*
 *		Parameters:
 *			Quad Room
 *				The quad which needs the edge found for.
@@ -1081,12 +1126,73 @@ FVector DungeonLayout::FindCenterOfClosestEdge(Quad Room, FVector Point)
 }
 /**********************************************************************************************************
 *	void ClearDungeonLayout()
-*		Purpose:	Finds the center of the edge of the quad closest to the point and returns it.
+*		Purpose:	Replaces all values in the dungeon layout with empty.
+*
+*		Changes:
+*			m_dungeonLayout - All values will be empty.
+**********************************************************************************************************/
+void DungeonLayout::ClearDungeonLayout()
+{
+	TileData blankTile = TileData();
+
+	blankTile.tileType = emptyTile;
+	blankTile.tileRotation = FRotator(0, 0, 0);
+
+	for (int y = 0; y < m_dungeonDimensions.Y; y++)
+	{
+		for (int x = 0; x < m_dungeonDimensions.X; x++)
+		{
+			m_dungeonLayout[y][x] = blankTile;
+		}
+	}
+}
+/**********************************************************************************************************
+*	void CreateFloorQuad(Quad Room)
+*		Purpose:	Changes all tiles inside the given quad to floor tiles in the dungeon layout.
+*
 *		Parameters:
 *			Quad Room
-*				The quad which needs the edge found for.
-*			FVector Point
-*				The point to find the edge nearest.
+*				The Quad that will be changed to floor tiles.
 *
-*		Return: Returns the center point to the edge closest to the point.
+*		Changes:
+*			m_dungeonLayout - All array elements falling within the bounds of Room will be changed to floor
+*							  tiles.
 **********************************************************************************************************/
+void DungeonLayout::CreateFloorQuad(Quad Room)
+{
+	// If the quad passed in has bad bounds resize it to fit inside the level.
+	FVector bottomLeftCorner = Room.GetPosition();
+	FVector topRightCorner = Room.GetBounds();
+
+	if (bottomLeftCorner.X < 0)
+		bottomLeftCorner.X = 0;
+	if (bottomLeftCorner.Y < 0)
+		bottomLeftCorner.Y = 0;
+	if (topRightCorner.X > m_dungeonDimensions.X)
+		topRightCorner.X = m_dungeonDimensions.X;
+	if (topRightCorner.Y > m_dungeonDimensions.Y)
+		topRightCorner.Y = m_dungeonDimensions.Y;
+
+	// Create a floor tile.
+	TileData newFloor = TileData();
+	newFloor.tileType = floorTile;
+	newFloor.tileRotation = FRotator(0, 0, 0);
+	int randomRotation = 0;
+
+	if (m_dungeonLayout != nullptr)
+	{
+		for (int y = bottomLeftCorner.Y; y < topRightCorner.Y; y++)
+		{
+			for (int x = bottomLeftCorner.X; x < topRightCorner.X; x++)
+			{
+				// Pick a random rotation for the floor tile.
+				randomRotation = m_randomStream.RandRange(0, 3);
+				randomRotation *= 90;
+				newFloor.tileRotation.Yaw = randomRotation;
+
+				// Assign the tile.
+				m_dungeonLayout[y][x] = newFloor;
+			}
+		}
+	}
+}

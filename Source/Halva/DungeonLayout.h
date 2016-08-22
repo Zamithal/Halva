@@ -95,6 +95,11 @@
 *			the edge of the room.
 *		FVector FindCenterOfClosestEdge(Quad Room, FVector Point)
 *			Finds the center of the edge that is closest to the point given.
+*		void ClearDungeonLayout()
+*			Clears all tiles in the created room leaving only empty in each slot.
+*		void CreateFloorQuad(Quad Room)
+*			All array elements in the dungeon layout that are contained within Room are changed to floor
+*			tiles.
 *
 *	Data Members:
 *
@@ -156,6 +161,8 @@ private:
 	void GeneratePathsRecursive(QuadTreeNode * CurrentNode);
 	Quad * FindClosestRoom(QuadTreeNode * ParentNode, FVector Point);
 	FVector FindCenterOfClosestEdge(Quad Room, FVector Point);
+	void ClearDungeonLayout();
+	void CreateFloorQuad(Quad Room);
 
 	// member variables
 	QuadTreeNode m_quadTreeRoot;

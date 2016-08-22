@@ -7,8 +7,8 @@
 **********************************************************************************************************/
 enum TileType
 {
-	floorTile,
 	emptyTile,
+	floorTile,
 	wallTile,
 	outsideCornerTile,
 	insideCornerTile,
