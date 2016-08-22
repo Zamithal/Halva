@@ -66,12 +66,6 @@
 *			added to m_rooms.
 *		Quad GenerateRandomRoom(Quad MaximumBounds)
 *			Creates a random Quad within MaximumBounds that is at least the size of m_minimumRoomSize.
-*		void GenerateLeafPathsRecursive(QuadTreeNode CurrentNode)
-*			Generates paths for each leaf node connected to the one passed in. If a leaf node is passed in
-*			no action is performed. Resulting paths are stored in m_paths.
-*		void PairOffLeafChildrenAndGeneratePaths(QuadTreeNode * CurrentNode)
-*			Pairs off all the direct children and generates appropriate paths for them. If the node passed
-*			in is not a direct parent of leaf nodes, this function will do nothing.
 *		bool GeneratePathBetweenQuads(Quad Room1, Quad Room2)
 *			Generates a path between the two rooms passed in and places the path in m_paths.
 *		bool GenerateYAlignedPath(Quad Room1, Quad Room2)
@@ -147,8 +141,6 @@ private:
 	// Helper functions
 	void GenerateRoomRecursive(QuadTreeNode * CurrentNode);
 	Quad GenerateRandomRoom(Quad MaximumBounds);
-	bool GenerateLeafPathsRecursive(QuadTreeNode * CurrentNode);
-	void PairOffLeafChildrenAndGeneratePaths(QuadTreeNode * CurrentNode);
 	bool GeneratePathBetweenQuads(Quad Room1, Quad Room2);
 	bool GenerateYAlignedPath(Quad Room1, Quad Room2);
 	bool GenerateXAlignedPath(Quad Room1, Quad Room2);

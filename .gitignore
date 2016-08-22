@@ -1,8 +1,12 @@
-# ignore
+# ignore Directories
 Binaries/
 DerivedDataCache/
 Intermediate/
 Saved/
+
+# Ignore filetypes
 *.suo
 *.sdf
-*.VC.db
+*.db
+*.opendb
+*.sln

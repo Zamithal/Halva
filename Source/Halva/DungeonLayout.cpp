@@ -348,95 +348,6 @@ Quad DungeonLayout::GenerateRandomRoom(Quad MaximumBounds)
 	return Quad(newRoomBounds, newRoomPosition);
 }
 /**********************************************************************************************************
-*	bool GenerateLeafPathsRecursive(QuadTreeNode * CurrentNode)
-*		Purpose:	Generates paths between all leaf nodes belonging to the node passed in. These paths
-*					will connect all leaf nodes to their siblings with at least one path directly or
-*					indirectly.
-*
-*		Parameters:
-*			QuadTreeNode CurrentNode
-*				All leaf nodes connected to this node will have paths built. If this node is a leaf node,
-*				no action will be performed.
-*
-*		Changes:
-*			m_paths - Paths generated are stored here.
-*
-*		Return: Returns if this is a leaf node. Used during the recursion.
-**********************************************************************************************************/
-bool DungeonLayout::GenerateLeafPathsRecursive(QuadTreeNode * CurrentNode)
-{
-	bool childrenAreLeafNodes = false;
-
-	if (CurrentNode != nullptr)
-	{
-		QuadTreeNode ** children = CurrentNode->GetChildren();
-		if (children != nullptr)
-		{
-			// If this node has children
-			if (children[0] != nullptr)
-			{
-				for (int i = 0; i < 4; i++)
-					// Overwriting the value does not matter.
-					childrenAreLeafNodes = GenerateLeafPathsRecursive(children[i]);
-			}
-			else
-				// This is a leaf node. return true.
-				return true;
-		}
-	}
-
-	if (childrenAreLeafNodes == true)
-	{
-		PairOffLeafChildrenAndGeneratePaths(CurrentNode);
-	}
-
-	// Not that it matters at this point but this is not a leaf node.
-	return false;
-}
-/**********************************************************************************************************
-*	void PairOffLeafChildrenAndGeneratePaths(QuadTreeNode * CurrentNode)
-*		Purpose:	Pairs off the children of this node and generates paths between their rooms. Paths
-*					Will not be generated between every room but it is guaranteed that each room will be
-*					reachable from any sibling, directly or indirectly.
-*
-*		Parameters:
-*			QuadTreeNode CurrentNode
-*				All direct leaves will have paths generated for them. These paths will connect the rooms
-*				belonging to these nodes. If the node has no room a path will not be generated for that
-*				room respecting special criteria such as 2 diagonal rooms.
-*
-*		Changes:
-*			m_paths - Paths generated are stored here.
-**********************************************************************************************************/
-void DungeonLayout::PairOffLeafChildrenAndGeneratePaths(QuadTreeNode * CurrentNode)
-{
-	if (CurrentNode != nullptr)
-	{
-		QuadTreeNode ** children = CurrentNode->GetChildren();
-		if (children != nullptr)
-		{
-			// If this node has children.
-			if (children[0] != nullptr)
-			{
-				// pick a random room to not connect once. This makes a C pattern instead of a loop.
-				int DontBuildIndex = m_randomStream.RandRange(0, 3);
-
-				for (int i = 0; i < 4; i++)
-				{
-					if (i != DontBuildIndex)
-					{
-						// Generate a path between this room and the room next to it. Loop around the array
-						// if needed.
-						GeneratePathBetweenQuads(*(children[i]->GetRoom()), *(children[(i + 1) % 4]->GetRoom()));
-					}
-				}
-
-				// Special case 1: Only 2 rooms exist and they are diagonal from one another.
-			}
-		}
-	}
-}
-/**********************************************************************************************************
 *	void GeneratePathBetweenQuads(Quad Room1, Quad Room2)
 *		Purpose:	Generates a path connecting Room1 to Room2. If a quad can be created directly between
 *					the two rooms of width m_PathWidth, a straight away will be built. If the quad does
@@ -924,91 +835,6 @@ bool DungeonLayout::GenerateLBendPathWithKnownOrientation(Quad Room1, Quad Room2
 	return true;
 }
 /**********************************************************************************************************
-*	Quad GetExtentsOfAllChildrenRooms(QuadTreeNode * ContainerNode)
-*		Purpose:	Retrieves a quad that contains all rooms belonging to this node and its children. If a
-*					line were drawn through this quad at any point a line would also be drawn through a
-*					room or a path.
-*		Parameters:
-*			QuadTreeNode * ContainerNode
-*				The node to get the extents of. Will return a quad containing all children rooms contained
-*				by this node.
-*
-*		Return: Returns a Quad marking the boundaries of all rooms contained in the node.
-**********************************************************************************************************/
-Quad DungeonLayout::GetExtentsOfAllChildrenRooms(QuadTreeNode * ContainerNode)
-{
-	Quad extents = Quad();
-
-	AdjustRoomBoundsRecursive(ContainerNode, extents);
-
-	return extents;
-}
-/**********************************************************************************************************
-*	void AdjustRoomBoundsRecursive(QuadTreeNode * CurrentNode, Quad & Extents)
-*		Purpose:	Recurses down the tree to find leaf nodes. Compares the room at each leaf nodes to see
-*					if it fits inside the quad Extents. If it doesn't extents is adjusted so that it does.
-*		Parameters:
-*			QuadTreeNode * CurrentNode
-*				The current node while recursing down the tree.
-*			Quad & Extents
-*				The Quad to store the maximum and minimum values found in.
-*
-*		Changes:
-*			Extents - Updated to contain the room of each child node reached.
-**********************************************************************************************************/
-void DungeonLayout::AdjustRoomBoundsRecursive(QuadTreeNode * CurrentNode, Quad & Extents)
-{
-	if (CurrentNode != nullptr)
-	{
-		QuadTreeNode ** children = CurrentNode->GetChildren();
-		if (children != nullptr)
-		{
-			// If this node has children.
-			if (children[0] != nullptr)
-			{
-				// Call this on the children.
-				for (int i = 0; i < 4; i++)
-					AdjustRoomBoundsRecursive(children[i], Extents);
-			}
-			// This is a leaf node.
-			else
-			{
-				Quad * room = CurrentNode->GetRoom();
-				if (room != nullptr)
-				{
-					// First check if Extents has been set at all.
-					if (Extents.GetBounds() == FVector(0, 0, 0))
-					{
-						// Include all of this room.
-						Extents = *CurrentNode->GetRoom();
-					}
-					// Otherwise check each edge and adjust accordingly.
-					else
-					{
-						FVector newPosition = Extents.GetPosition();
-						FVector newBounds = Extents.GetBounds();
-
-						FVector roomPosition = room->GetPosition();
-						FVector roomBounds = room->GetBounds();
-
-						if (roomPosition.X < newPosition.X)
-							newPosition.X = roomPosition.X;
-						if (roomPosition.Y < newPosition.Y)
-							newPosition.Y = roomPosition.Y;
-						if (roomBounds.X > newBounds.X)
-							newBounds.X = roomBounds.X;
-						if (roomBounds.Y > newBounds.Y)
-							newBounds.Y = roomBounds.Y;
-
-						Extents.SetPosition(newPosition);
-						Extents.SetBounds(newBounds);
-					}
-				}
-			}
-		}
-	}
-}
-/**********************************************************************************************************
 *	void GeneratePathsRecursive(QuadTreeNode * CurrentNode)
 *		Purpose:	Connects the set of rooms belonging to each child passed in current node with a path.
 *					The path can either be direct or indirect but each set will be reachable through
@@ -1090,9 +916,9 @@ void DungeonLayout::GeneratePathsRecursive(QuadTreeNode * CurrentNode)
 						}
 
 						// Find the closest room belonging to child i.
-						Quad Room1 = FindClosestRoom(children[i], randomPointBetweenQuads);
+						Quad Room1 = *FindClosestRoom(children[i], randomPointBetweenQuads);
 						// Find the closest room belonging to child i+1.
-						Quad Room2 = FindClosestRoom(children[(i + 1) % 4], randomPointBetweenQuads);
+						Quad Room2 = *FindClosestRoom(children[(i + 1) % 4], randomPointBetweenQuads);
 
 						GeneratePathBetweenQuads(Room1, Room2);
 					}
@@ -1142,11 +968,11 @@ Quad * DungeonLayout::FindClosestRoom(QuadTreeNode * ParentNode, FVector Point)
 					newQuad = FindClosestRoom(children[i], Point);
 
 					if (newQuad != nullptr)
-						newDistance = (FindCenterOfClosestEdge(*newQuad, Point) - Point).Size;
+						newDistance = (FindCenterOfClosestEdge(*newQuad, Point) - Point).Size();
 
 					if (closestQuad != nullptr && newQuad != nullptr)
 					{
-						oldDistance = (FindCenterOfClosestEdge(*closestQuad, Point) - Point).Size;
+						oldDistance = (FindCenterOfClosestEdge(*closestQuad, Point) - Point).Size();
 
 						if (newDistance < oldDistance)
 							newQuad = closestQuad;
