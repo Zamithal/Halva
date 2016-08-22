@@ -30,6 +30,9 @@
 *
 *		DungeonLayout
 *			-Get
+*		DungeonDimensions
+*			-Get
+*			-Set+
 *		MinimumRoomSize
 *			-Get
 *			-Set
@@ -99,7 +102,9 @@
 *		TArray<Quad> m_rooms - A list of all the rooms in the dungeon.
 *		TArray<Quad> m_paths - A list of all the paths in the dungeon.
 *		TileData ** m_dungeonLayout - Holds all the information needed to pick a tile in each element. This
-*									  will be a 2D array but its bounds are not known at compile time.
+*									  will be an array of arrays but will be used as a simple 2D array.
+*		FVector m_dungeonDimensions - The maximum dimensions of the dungeon. This is how many tiles across
+*									  the level will be once generated.
 *		FVector m_minimumRoomSize - The smallest room that can be generated in the level.
 *		int m_pathWidth - The width of all paths between rooms or other paths.
 *		FRandomStream m_randomStream - Stream for generating random numbers.
@@ -118,6 +123,8 @@ public:
 
 	// Mutators
 	TileData ** GetDungeonLayout();
+	FVector GetDungeonDimensions();
+	void SetDungeonDimensions(FVector DungeonDimensions);
 	FVector GetMinimumRoomSize();
 	void SetMinimumRoomSize(FVector MinimumRoomSize);
 	int GetPathWidth();
@@ -155,6 +162,7 @@ private:
 	TArray<Quad> m_rooms;
 	TArray<Quad> m_paths;
 	TileData ** m_dungeonLayout;
+	FVector m_dungeonDimensions;
 	FVector m_minimumRoomSize;
 	int m_pathWidth;
 	FRandomStream m_randomStream;

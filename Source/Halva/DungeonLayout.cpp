@@ -15,6 +15,7 @@ DungeonLayout::DungeonLayout()
 	m_rooms = TArray<Quad>();
 	m_paths = TArray<Quad>();
 	m_minimumRoomSize = FVector(0, 0, 0);
+	m_dungeonDimensions = FVector(0, 0, 0);
 	m_quadTreeRoot = QuadTreeNode(0, Quad(), m_minimumRoomSize, FRandomStream(0));
 	m_pathWidth = 0;
 	m_dungeonLayout = nullptr;
@@ -50,6 +51,7 @@ DungeonLayout::DungeonLayout(const DungeonLayout & Source)
 	m_rooms = Source.m_rooms;
 	m_paths = Source.m_paths;
 	m_pathWidth = Source.m_pathWidth;
+	m_dungeonDimensions = Source.m_dungeonDimensions;
 	m_minimumRoomSize = Source.m_minimumRoomSize;
 	m_randomStream = Source.m_randomStream;
 	m_quadTreeRoot = Source.m_quadTreeRoot;
@@ -114,6 +116,7 @@ DungeonLayout & DungeonLayout::operator=(const DungeonLayout & Source)
 		m_rooms = Source.m_rooms;
 		m_paths = Source.m_paths;
 		m_pathWidth = Source.m_pathWidth;
+		m_dungeonDimensions = Source.m_dungeonDimensions;
 		m_minimumRoomSize = Source.m_minimumRoomSize;
 		m_randomStream = Source.m_randomStream;
 		m_quadTreeRoot = Source.m_quadTreeRoot;
@@ -162,6 +165,25 @@ TileData ** DungeonLayout::GetDungeonLayout()
 	return m_dungeonLayout;
 }
 /**********************************************************************************************************
+*	FVector GetDungeonDimensions()
+*		Purpose:	Getter.
+**********************************************************************************************************/
+FVector DungeonLayout::GetDungeonDimensions()
+{
+	return m_dungeonDimensions;
+}
+/**********************************************************************************************************
+*	void SetDungeonDimensions(FVector DungeonDimensions)
+*		Purpose:	Setter.
+*
+*		Changes: m_DungeonLayout - The 2D array is resized to match the new dungeon dimensions. If data
+*								   was held it is lost upon resizing. All values will be set to empty.
+**********************************************************************************************************/
+void DungeonLayout::SetDungeonDimensions(FVector DungeonDimensions)
+{
+
+}
+/**********************************************************************************************************
 *	FVector GetMinimumRoomSize()
 *		Purpose:	Getter.
 **********************************************************************************************************/
@@ -206,7 +228,14 @@ void DungeonLayout::SetPathWidth(int PathWidth)
 **********************************************************************************************************/
 void DungeonLayout::GenerateDungeonLayout()
 {
-
+	GenerateRooms();
+	GeneratePaths();
+	CreateRoomLayout();
+	CreateSpecialTiles();
+	CreateWalls();
+	CreatePillars();
+	CreateOutsideCorners();
+	CreateInsideCorners();
 }
 /**********************************************************************************************************
 *	void GenerateRooms()
@@ -222,12 +251,31 @@ void DungeonLayout::GenerateRooms()
 	m_rooms.Empty();
 	GenerateRoomRecursive(&m_quadTreeRoot);
 }
-
+/**********************************************************************************************************
+*	void GenerateRooms()
+*		Purpose:	Populates m_rooms with a random sized room for each child quad in m_QuadTreeRoot. This
+*					room will be no smaller than m_minimumRoomSize including walls. A room will be
+*					generated for every quad regardless of if it is used in the final layout or not.
+*
+*		Changes:
+*			m_rooms - Will be populated with a room for each quad in m_quadTreeRoot.
+**********************************************************************************************************/
 void DungeonLayout::GeneratePaths()
 {
-
+	m_paths.Empty();
+	GeneratePathsRecursive(&m_quadTreeRoot);
 }
-
+/**********************************************************************************************************
+*	void CreateRoomLayout()
+*		Purpose:	Passes through each room and path in m_rooms and m_paths and assigns them as a floor
+*					in the 2D array m_dungeonLayout. For example, If a room includes the point (33,44)
+*					the value m_dungeonLayout[44][33] will be set to floor. All other tiles not in a room
+*					or path are set to empty.
+*
+*		Changes:
+*			m_dungeonLayout - The values are changed depending on if a room or path overlaps with the
+*				array location.
+**********************************************************************************************************/
 void DungeonLayout::CreateRoomLayout()
 {
 
@@ -1031,3 +1079,14 @@ FVector DungeonLayout::FindCenterOfClosestEdge(Quad Room, FVector Point)
 
 	return centerPoint;
 }
+/**********************************************************************************************************
+*	void ClearDungeonLayout()
+*		Purpose:	Finds the center of the edge of the quad closest to the point and returns it.
+*		Parameters:
+*			Quad Room
+*				The quad which needs the edge found for.
+*			FVector Point
+*				The point to find the edge nearest.
+*
+*		Return: Returns the center point to the edge closest to the point.
+**********************************************************************************************************/
