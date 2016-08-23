@@ -1239,36 +1239,80 @@ void DungeonLayout::CreateFloorQuad(Quad Room)
 **********************************************************************************************************/
 bool DungeonLayout::SolveWallTile(int XPosition, int YPosition)
 {
-	if (m_dungeonLayout != nullptr)
-	{
-		// Make sure the tile is a valid location in the map.
-		bool inBounds = true;
-		inBounds = inBounds && XPosition >= 0;
-		inBounds = inBounds && YPosition >= 0;
-		inBounds = inBounds && XPosition <= m_dungeonDimensions.X;
-		inBounds = inBounds && YPosition <= m_dungeonDimensions.Y;
+	if (m_dungeonLayout == nullptr)
+		return false;
 
-		if (inBounds)
+	// Make sure the tile is a valid location in the map.
+	bool inBounds = true;
+	inBounds = inBounds && XPosition >= 0;
+	inBounds = inBounds && YPosition >= 0;
+	inBounds = inBounds && XPosition <= m_dungeonDimensions.X;
+	inBounds = inBounds && YPosition <= m_dungeonDimensions.Y;
+
+	if (!inBounds)
+		return false;
+
+	// Make sure the tile is a floor tile.
+	if (m_dungeonLayout[YPosition][XPosition].tileType != floorTile)
+		return false;
+	
+	TileData newWall = TileData();
+
+	newWall.tileType = wallTile;
+
+	// If this tile is an edge of the level force it to be a wall.
+	if (XPosition == 0)
+	{
+		newWall.tileRotation = FRotator(0, 0, 0);
+		m_dungeonLayout[YPosition][XPosition] = newWall;
+		return true;
+	}
+	else if (YPosition == 0)
+	{
+		newWall.tileRotation = FRotator(0, 0, 90);
+		m_dungeonLayout[YPosition][XPosition] = newWall;
+		return true;
+	}
+	else if (XPosition == m_dungeonDimensions.X)
+	{
+		newWall.tileRotation = FRotator(0, 0, 180);
+		m_dungeonLayout[YPosition][XPosition] = newWall;
+		return true;
+	}
+	else if (YPosition == m_dungeonDimensions.Y)
+	{
+		newWall.tileRotation = FRotator(0, 0, 270);
+		m_dungeonLayout[YPosition][XPosition] = newWall;
+		return true;
+	}
+
+
+	// Get surrounding tile data.
+	for (int y = -1; y < 1; y++)
+	{
+		for (int x = -1; x < 1; x++)
 		{
-			// Make sure the tile is a floor tile.
-			if (m_dungeonLayout[YPosition][XPosition].tileType == floorTile)
+			// XOR - get tiles adjacent to the center.
+			if ((x != 0) != (y != 0))
 			{
-				// Get surrounding tile data.
-				for (int y = 0; y < 2; y++)
+				TileData adjacentTile = m_dungeonLayout[y][x];
+
+				if (adjacentTile.tileType == emptyTile)
 				{
-					for (int x = 0; x < 2; x++)
-					{
-						// XOR - get tiles adjacent to the center.
-						if ((x != 1) != (y != 1))
-						{
-							// Check for edge of map.
-							if 
-						}
-					}
+					// Set the tile rotation to face away from the empty tile.
+					if (x == 0)
+						newWall.tileRotation = FRotator(0, 0, (y + 1) * 90 + 90);
+					else
+						newWall.tileRotation = FRotator(0, 0, (x + 1) * 90);
+
+					// Set the tile in the dungeon layout.
+					m_dungeonLayout[YPosition][XPosition] = newWall;
+					return true;
 				}
 			}
 		}
 	}
 
+	// Tile could not be built because there are no surrounding empties.
 	return false;
 }
