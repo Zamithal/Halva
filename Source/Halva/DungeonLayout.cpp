@@ -258,9 +258,9 @@ void DungeonLayout::GenerateDungeonLayout()
 	GenerateRooms();
 	GeneratePaths();
 	CreateRoomLayout();
-	CreateSpecialTiles();
+	//CreateSpecialTiles();
 	CreateWalls();
-	CreatePillars();
+	//CreatePillars();
 	CreateOutsideCorners();
 	CreateInsideCorners();
 }
@@ -322,10 +322,19 @@ void DungeonLayout::CreateRoomLayout()
 		CreateFloorQuad(m_paths[i]);
 	}
 }
-
+/**********************************************************************************************************
+*	void CreateSpecialTiles
+*		Purpose:	Marks existing floor tiles as special tiles. These tiles have their type changed to
+*					special tiles.
+*
+*		Changes:
+*			m_dungeonLayout - Floor tiles can be changed into special tiles.
+*
+*		NOTE: Rules for this function are not yet clear, this function may be removed in the future.
+**********************************************************************************************************/
 void DungeonLayout::CreateSpecialTiles()
 {
-
+	//TODO: Define special tiles or remove this function.
 }
 /**********************************************************************************************************
 *	void CreateWalls
@@ -356,17 +365,45 @@ void DungeonLayout::CreateWalls()
 		}
 	}
 }
-
+/**********************************************************************************************************
+*	void CreatePillars
+*		Purpose:	Finds all walls within the dungeon layout and checks to see if they should be pillars.
+*					Pillars spawn when a single wall is completely surrounded by floor tiles. All tiles
+*					meeting this requirement will be replaced with pillars.
+*
+*		Changes:
+*			m_dungeonLayout - All wall tiles that are touching only floor tiles will be replaced with
+*							  pillars.
+*
+*		NOTE: The current implementation does not allow for the spawning of pillars. Because of this, this
+*			  step is skipped entirely.
+**********************************************************************************************************/
 void DungeonLayout::CreatePillars()
 {
-
+	//TODO: Either change implementation so that pillars can spawn or delete this function.
 }
-
+/**********************************************************************************************************
+*	void CreateOutsideCorners
+*		Purpose:	Examines walls within the dungeon layout and checks to see if they have exactly 2 floor
+*					tiles touching. If it does, this tile can be replaced with an outside corner.
+*
+*		Changes:
+*			m_dungeonLayout - All walls that are touching exactly 2 floor tiles and exactly 2 wall tiles
+*							  will be replaced with an outside corner tile.
+**********************************************************************************************************/
 void DungeonLayout::CreateOutsideCorners()
 {
 
 }
-
+/**********************************************************************************************************
+*	void CreateInsideCorners
+*		Purpose:	Replaces all walls that are touching exactly 2 other walls and 2 empties. The tiles
+*					are replaced with inside corners and their rotators are set accordingly.
+*
+*		Changes:
+*			m_dungeonLayout - All walls touching 2 empties and 2 other walls are replaced with inside
+*							  corner tiles.
+**********************************************************************************************************/
 void DungeonLayout::CreateInsideCorners()
 {
 
