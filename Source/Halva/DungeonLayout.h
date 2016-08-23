@@ -59,7 +59,7 @@
 *		void CreatePillars()
 *			Generates a pillar where ever there is a wall completely surrounded by only floors.
 *		void CreateOutsideCorners()
-*			Replaces walls with outside corners where they are needed. These are commonly found where a
+*			Replaces floors with outside corners where they are needed. These are commonly found where a
 *			path merges with a room.
 *		void Generate InsideCorners()
 *			Replaces walls with inside corners where they are needed. These are at the corners of every
@@ -100,10 +100,16 @@
 *		void CreateFloorQuad(Quad Room)
 *			All array elements in the dungeon layout that are contained within Room are changed to floor
 *			tiles.
-*		bool SolveWallTile(int XPosition, int YPosition);
+*		bool SolveWallTile(int XPosition, int YPosition)
 *			Determines if the tile at the given position should be a wall tile or not. If it should be,
 *			also determines the rotation it should face. The tile is then assigned the type of wall tile
 *			and given the rotation. Return true on successful assignment, false on failure.
+*		bool SolveOutsideCornerTile(int XPosition, int YPosition)
+*			Determines if the tile at the given position should be a corner or not. If it should, that
+*			tile is replaced with an outside corner and reoriented to fit the requirements.
+*		bool SolveInsideCornerTile(int XPosition, int YPosition)
+*			Checks if the tile at the given position should be an inside corner. If so, replaces that tile
+*			with an inside corner.
 *
 *	Data Members:
 *
@@ -168,6 +174,8 @@ private:
 	void ClearDungeonLayout();
 	void CreateFloorQuad(Quad Room);
 	bool SolveWallTile(int XPosition, int YPosition);
+	bool SolveOutsideCornerTile(int XPosition, int YPosition);
+	bool SolveInsideCornerTile(int XPosition, int YPosition);
 
 	// member variables
 	QuadTreeNode m_quadTreeRoot;

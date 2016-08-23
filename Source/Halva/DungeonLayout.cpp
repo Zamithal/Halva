@@ -384,16 +384,29 @@ void DungeonLayout::CreatePillars()
 }
 /**********************************************************************************************************
 *	void CreateOutsideCorners
-*		Purpose:	Examines walls within the dungeon layout and checks to see if they have exactly 2 floor
-*					tiles touching. If it does, this tile can be replaced with an outside corner.
+*		Purpose:	Examines floors within the dungeon layout and checks to see if they have exactly 2
+*					floor tiles touching. If it does, this tile can be replaced with an outside corner.
 *
 *		Changes:
-*			m_dungeonLayout - All walls that are touching exactly 2 floor tiles and exactly 2 wall tiles
+*			m_dungeonLayout - All floors that are touching exactly 2 floor tiles and exactly 2 wall tiles
 *							  will be replaced with an outside corner tile.
 **********************************************************************************************************/
 void DungeonLayout::CreateOutsideCorners()
 {
-
+	if (m_dungeonLayout != nullptr)
+	{
+		for (int y = 0; y < m_dungeonDimensions.Y; y++)
+		{
+			for (int x = 0; x < m_dungeonDimensions.X; x++)
+			{
+				// If the tile is a floor tile.
+				if (m_dungeonLayout[y][x].tileType == floorTile)
+				{
+					SolveOutsideCornerTile(x, y);
+				}
+			}
+		}
+	}
 }
 /**********************************************************************************************************
 *	void CreateInsideCorners
@@ -406,7 +419,20 @@ void DungeonLayout::CreateOutsideCorners()
 **********************************************************************************************************/
 void DungeonLayout::CreateInsideCorners()
 {
-
+	if (m_dungeonLayout != nullptr)
+	{
+		for (int y = 0; y < m_dungeonDimensions.Y; y++)
+		{
+			for (int x = 0; x < m_dungeonDimensions.X; x++)
+			{
+				// If the tile is a floor tile.
+				if (m_dungeonLayout[y][x].tileType == wallTile)
+				{
+					SolveInsideCornerTile(x, y);
+				}
+			}
+		}
+	}
 }
 /**********************************************************************************************************
 *	void GenerateRoomRecursive(QuadTreeNode * CurrentNode)
@@ -1351,5 +1377,125 @@ bool DungeonLayout::SolveWallTile(int XPosition, int YPosition)
 	}
 
 	// Tile could not be built because there are no surrounding empties.
+	return false;
+}
+/**********************************************************************************************************
+*	bool SolveOutsideCornerTile(int XPositon, int YPosition)
+*		Purpose:	Checks to see if the tile at (X, Y) is a floor tile touching exactly 2 walls and 2
+*					floors. If it is, attempt to solve for an corner orientation that will complete the
+*					wall. Returns true on successfully building the tile, false on failure.
+*
+*		Parameters:
+*			int XPosition
+*				The x position in the dungeon layout of the tile to solve for.
+*			int YPosition
+*				The y position in the dungeon layout of the tile to solve for.
+*
+*		Changes:
+*			m_dungeonLayout - The tile at (x, y) could be changed to an outside corner.
+*
+*		Return: Returns if the tile was changed to a corner.
+**********************************************************************************************************/
+bool DungeonLayout::SolveOutsideCornerTile(int XPosition, int YPosition)
+{
+	if (m_dungeonLayout == nullptr)
+		return false;
+
+	// Make sure the tile is a valid location in the map. An outside corner cannot be on the edge of the
+	// map and generate correctly.
+	bool inBounds = true;
+	inBounds = inBounds && XPosition > 0;
+	inBounds = inBounds && YPosition > 0;
+	inBounds = inBounds && XPosition < m_dungeonDimensions.X;
+	inBounds = inBounds && YPosition < m_dungeonDimensions.Y;
+
+	if (!inBounds)
+		return false;
+
+	int floorTileCount = 0;
+	int wallTileCount = 0;
+
+	FVector floorTiles[2];
+
+	// Count and store the locations of  wall and floor tiles around this tile.
+	for (int y = -1; y < 1; y++)
+	{
+		for (int x = -1; x < 1; x++)
+		{
+			// XOR - get tiles adjacent to the center.
+			if ((x != 0) != (y != 0))
+			{
+				TileData adjacentTile = m_dungeonLayout[y][x];
+
+				if (adjacentTile.tileType == floorTile)
+				{
+					if (floorTileCount < 2)
+						floorTiles[floorTileCount] = FVector(x, y, 0);
+					floorTileCount++;
+				}
+				else if (adjacentTile.tileType == wallTile)
+				{
+					wallTileCount++;
+				}
+			}
+		}
+	}
+
+
+	if (floorTileCount == 2 && wallTileCount == 2)
+	{
+		
+
+		int xSum = floorTiles[0].X + floorTiles[1].X;
+		int ySum = floorTiles[0].Y + floorTiles[1].Y;
+
+		// This should be a 1 thick wall, not a corner.
+		if (xSum == 0 || ySum == 0)
+			return false;
+
+		TileData newCorner = TileData();
+
+		newCorner.tileType = outsideCornerTile;
+
+		// either 180 or 0.
+		if (xSum + ySum == 0)
+		{
+			// 0
+			if (xSum == -1)
+				newCorner.tileRotation.Yaw = 0;
+			else
+				newCorner.tileRotation.Yaw = 180;
+		}
+		// 90 or -90.
+		else
+			newCorner.tileRotation.Yaw = (xSum + ySum) * 45;
+
+		m_dungeonLayout[YPosition][XPosition] = newCorner;
+		return true;
+
+	}
+
+	// Incorrect tile configuration, do not build a corner.
+	return false;
+}
+/**********************************************************************************************************
+*	bool SolveInsideCornerTile(int XPositon, int YPosition)
+*		Purpose:	Checks to see if the tile at the given position is a wall tile touching 2 empties and
+*					2 other walls. If it is, attempts to create an inside corner tile at that location.
+*					Returns true if the corner could be made, false if it could not.
+*
+*		Parameters:
+*			int XPosition
+*				The x position in the dungeon layout of the tile to solve for.
+*			int YPosition
+*				The y position in the dungeon layout of the tile to solve for.
+*
+*		Changes:
+*			m_dungeonLayout - The tile at (x, y) could be changed to an inside corner.
+*
+*		Return: Returns if the tile was changed to a corner.
+**********************************************************************************************************/
+bool DungeonLayout::SolveInsideCornerTile(int XPosition, int YPosition)
+{
 	return false;
 }
