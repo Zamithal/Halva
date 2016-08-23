@@ -327,10 +327,34 @@ void DungeonLayout::CreateSpecialTiles()
 {
 
 }
-
+/**********************************************************************************************************
+*	void CreateWalls
+*		Purpose:	Scans through the dungeon layout and changes all floor tiles that are adjacent to at
+*					least one empty into wall tiles. Rotation is set to face away from the first empty
+*					tile found. Additionally, if the floor tile is touching the edge of the level it will
+*					also become a wall. Touching corners is not considered touching, these tiles will
+*					remain floors.
+*
+*		Changes:
+*			m_dungeonLayout - All floor tiles touching at least one empty are changed to wall tiles. All
+*							  floor tiles touching the edge of the level are changed to wall tiles.
+**********************************************************************************************************/
 void DungeonLayout::CreateWalls()
 {
-
+	if (m_dungeonLayout != nullptr)
+	{
+		for (int y = 0; y < m_dungeonDimensions.Y; y++)
+		{
+			for (int x = 0; x < m_dungeonDimensions.X; x++)
+			{
+				// If the tile is a floor tile.
+				if (m_dungeonLayout[y][x].tileType == floorTile)
+				{
+					SolveWallTile( x, y );
+				}
+			}
+		}
+	}
 }
 
 void DungeonLayout::CreatePillars()
@@ -1155,8 +1179,8 @@ void DungeonLayout::ClearDungeonLayout()
 *				The Quad that will be changed to floor tiles.
 *
 *		Changes:
-*			m_dungeonLayout - All array elements falling within the bounds of Room will be changed to floor
-*							  tiles.
+*			m_dungeonLayout - All array elements falling within the bounds of Room will be changed to 
+*							  floor tiles.
 **********************************************************************************************************/
 void DungeonLayout::CreateFloorQuad(Quad Room)
 {
@@ -1195,4 +1219,56 @@ void DungeonLayout::CreateFloorQuad(Quad Room)
 			}
 		}
 	}
+}
+/**********************************************************************************************************
+*	bool SolveWallTile(int XPositon, int YPosition)
+*		Purpose:	Checks to see if the tile at the given position is a floor tile and is contacting at
+*					least one empty tile or the map edge. If these are true, The tile is changed to a wall
+*					tile and a rotation is assigned.
+*
+*		Parameters:
+*			int XPosition
+*				The x position in the dungeon layout of the tile to solve for.
+*			int YPosition
+*				The y position in the dungeon layout of the tile to solve for.
+*
+*		Changes:
+*			m_dungeonLayout - The tile at (x, y) could be changed to a wall.
+*
+*		Return: Returns if the tile was changed to a wall.
+**********************************************************************************************************/
+bool DungeonLayout::SolveWallTile(int XPosition, int YPosition)
+{
+	if (m_dungeonLayout != nullptr)
+	{
+		// Make sure the tile is a valid location in the map.
+		bool inBounds = true;
+		inBounds = inBounds && XPosition >= 0;
+		inBounds = inBounds && YPosition >= 0;
+		inBounds = inBounds && XPosition <= m_dungeonDimensions.X;
+		inBounds = inBounds && YPosition <= m_dungeonDimensions.Y;
+
+		if (inBounds)
+		{
+			// Make sure the tile is a floor tile.
+			if (m_dungeonLayout[YPosition][XPosition].tileType == floorTile)
+			{
+				// Get surrounding tile data.
+				for (int y = 0; y < 2; y++)
+				{
+					for (int x = 0; x < 2; x++)
+					{
+						// XOR - get tiles adjacent to the center.
+						if ((x != 1) != (y != 1))
+						{
+							// Check for edge of map.
+							if 
+						}
+					}
+				}
+			}
+		}
+	}
+
+	return false;
 }

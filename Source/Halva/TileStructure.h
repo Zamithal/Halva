@@ -25,16 +25,3 @@ struct TileData
 	TileType tileType;
 	FRotator tileRotation;
 };
-
-
-/**********************************************************************************************************
-*	struct Range
-*
-*		Purpose:
-*			Contains a range of integers.
-**********************************************************************************************************/
-struct IntRange
-{
-	int minima;
-	int maxima;
-};
