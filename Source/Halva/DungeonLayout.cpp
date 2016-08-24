@@ -1547,5 +1547,35 @@ bool DungeonLayout::SolveInsideCornerTile(int XPosition, int YPosition)
 		}
 	}
 
+	if (wallCount == 2 && emptyCount == 2)
+	{
+		int xSum = wallTiles[0].X + wallTiles[1].X;
+		int ySum = wallTiles[0].Y + wallTiles[1].Y;
+
+		// Make sure the walls are not across from each other.
+		if (xSum == 0 || ySum == 0)
+			return false;
+
+		TileData newCorner = TileData();
+
+		newCorner.tileType = insideCornerTile;
+
+		// either 180 or 0.
+		if (xSum + ySum == 0)
+		{
+			// 0
+			if (xSum == -1)
+				newCorner.tileRotation.Yaw = 0;
+			else
+				newCorner.tileRotation.Yaw = 180;
+		}
+		// 90 or -90.
+		else
+			newCorner.tileRotation.Yaw = (xSum + ySum) * 45;
+
+		m_dungeonLayout[YPosition][XPosition] = newCorner;
+		return true;
+	}
+
 	return false;
 }
