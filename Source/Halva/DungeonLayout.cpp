@@ -460,13 +460,11 @@ void DungeonLayout::GenerateRoomRecursive(QuadTreeNode * CurrentNode)
 			// If the first child is not set none of them are. That makes this a leaf node.
 			if (children[0] != nullptr)
 			{
+				// Add the room to the list of rooms.
+				int tArrayIndex = m_rooms.Add(GenerateRandomRoom(CurrentNode->GetQuad()));
 
-				//TODO: Could cause issues with TArrays, look into how TArrays work in more detail.
-				Quad * newRoom = new Quad(GenerateRandomRoom(CurrentNode->GetQuad()));
-
-				m_rooms.Add(*newRoom);
-
-				CurrentNode->SetRoom(newRoom);
+				// Set this node's room to point at the newly created room.
+				CurrentNode->SetRoom(&m_rooms[tArrayIndex]);
 			}
 			// else call this on the children.
 			else
@@ -545,6 +543,14 @@ Quad DungeonLayout::GenerateRandomRoom(Quad MaximumBounds)
 **********************************************************************************************************/
 bool DungeonLayout::GeneratePathBetweenQuads(Quad Room1, Quad Room2)
 {
+	// Don't waist time if the room is 0 sized.
+	FVector Room1Size = Room1.GetBounds() - Room1.GetPosition();
+	FVector Room2Size = Room2.GetBounds() - Room2.GetPosition();
+
+	// If any dimensions are 0 the room cannot be solved.
+	if (Room1Size.X * Room1Size.Y * Room2Size.X * Room2Size.Y == 0)
+		return false;
+
 	bool PathGenerated = false;
 	// Attempt to generate a straight path Y aligned.
 	PathGenerated = GenerateYAlignedPath(Room1, Room2);
@@ -1051,7 +1057,10 @@ void DungeonLayout::GeneratePathsRecursive(QuadTreeNode * CurrentNode)
 				int randomMin = 0;
 				int randomMax = 0;
 
-				// Connect children
+				// Go through each of the 4 children finding a random point along
+				// the edge that can be connected to each other child.
+				// EG: Since child 0 is the bottom left, find a random point along
+				// its top edge to connect to child 1 (top left quad).
 				for (int i = 0; i < 4; i++)
 				{
 					if (i != DontBuildPathIndex)
@@ -1061,28 +1070,28 @@ void DungeonLayout::GeneratePathsRecursive(QuadTreeNode * CurrentNode)
 						// Switch will result in getting a random point.
 						switch (i)
 						{
-							// 0 = Bottom Left
+						// 0 = Bottom Left
 						case 0:
 							randomMin = currentChildQuad.GetPosition().X;
 							randomMax = currentChildQuad.GetBounds().X;
 							randomPointBetweenQuads.Y = currentChildQuad.GetBounds().Y;
 							randomPointBetweenQuads.X = m_randomStream.RandRange(randomMin, randomMax);
 							break;
-							// 1 = Top Left
+						// 1 = Top Left
 						case 1:
 							randomMin = currentChildQuad.GetPosition().Y;
 							randomMax = currentChildQuad.GetBounds().Y;
 							randomPointBetweenQuads.X = currentChildQuad.GetBounds().X;
 							randomPointBetweenQuads.Y = m_randomStream.RandRange(randomMin, randomMax);
 							break;
-							// 2 = Top Right
+						// 2 = Top Right
 						case 2:
 							randomMin = currentChildQuad.GetPosition().X;
 							randomMax = currentChildQuad.GetBounds().X;
 							randomPointBetweenQuads.Y = currentChildQuad.GetPosition().Y;
 							randomPointBetweenQuads.X = m_randomStream.RandRange(randomMin, randomMax);
 							break;
-							// 3 = Bottom Right
+						// 3 = Bottom Right
 						case 3:
 							randomMin = currentChildQuad.GetPosition().Y;
 							randomMax = currentChildQuad.GetBounds().Y;
