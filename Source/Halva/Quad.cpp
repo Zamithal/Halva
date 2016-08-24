@@ -56,9 +56,9 @@ Quad::~Quad()
 *			const Quad & Source
 *				The Quad to copy. This will become an exact copy of Source.
 *
-*		Return:		This is returned by reference for operator chaining.
-*
 *		Changes:	This quad performs a deep copy of Source.
+*
+*		Return - This is returned by reference for operator chaining.
 **********************************************************************************************************/
 Quad & Quad::operator=(const Quad & Source)
 {
@@ -69,6 +69,29 @@ Quad & Quad::operator=(const Quad & Source)
 	}
 
 	return *this;
+}
+/**********************************************************************************************************
+*	bool operator==(const Quad & rhs)
+*		Purpose:	Compares the quad passed at rhs to this. If the bounds and position of both quads are
+*					the same. They are the same.
+*
+*		Parameters:
+*			const Quad & rhs
+*				The Quad to compare this to.
+*
+*		Return - Returns if this quad is the same as the quad passed in.
+**********************************************************************************************************/
+bool Quad::operator==(const Quad & rhs) const
+{
+	bool equal = true;
+
+	if (m_position != rhs.m_position)
+		equal = false;
+
+	if (m_bounds != rhs.m_bounds)
+		equal = false;
+
+	return equal;
 }
 /**********************************************************************************************************
 *	FVector GetBounds()

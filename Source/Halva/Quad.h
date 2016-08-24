@@ -10,16 +10,19 @@
 *
 *	Manager Functions:
 *
-*		Quad();
+*		Quad()
 *			Default constructor. Results in a 0x0x0 quad at position 0,0,0.
-*		Quad(FVector Size, FVector Position);
+*		Quad(FVector Size, FVector Position)
 *			Results in a quad of size Size at position Position.
-*		Quad(const Quad & source);
+*		Quad(const Quad & source)
 *			Creates a new quad that is a copy of the quad passed in.
-*		~Quad();
+*		~Quad()
 *			Destructor.
-*		Quad & operator=(const Quad & source);
-*			overrides the = operator to cause expected behavior.
+*		Quad & operator=(const Quad & source)
+*			Overrides the = operator to cause expected behavior.
+*		bool operator==(const Quad & rhs)
+*			Compares rhs to see if it is equal to this. This is only true if bounds and position are the
+*			same.
 *
 *	Mutators:
 *	
@@ -31,6 +34,7 @@
 *			-Set
 *
 *	Data Members:
+*
 *		FVector m_bounds - The extents of the quad.
 *		FVector m_position - The position of the quad.
 **********************************************************************************************************/
@@ -42,6 +46,7 @@ public:
 	Quad(const Quad & source);
 	~Quad();
 	Quad & operator=(const Quad & source);
+	bool operator==(const Quad & rhs) const;
 
 	FVector GetBounds();
 	void SetBounds(FVector newBounds);

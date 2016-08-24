@@ -563,11 +563,64 @@ bool DungeonLayout::DropRandomRoomRecursive(QuadTreeNode * CurrentNode)
 		// Short circuit evaluation of "If the current node has children."
 		if (children != nullptr && children[0] != nullptr)
 		{
-			//Pick a random
+			int failedTries = 0;
+			int failedChildren[4];
+
+			bool removedARoom = false;
+			bool childHasFailed = false;
+			int randomChild = 0;
+
+			// While there are still children that have not failed.
+			while (removedARoom == false && failedTries < 4)
+			{
+				randomChild = m_randomStream.RandRange(0, 4);
+				childHasFailed = false;
+
+				// make sure the random child has not already been tried.
+				for (int i = 0; i < failedTries; i++)
+				{
+					if (randomChild == failedChildren[i])
+						childHasFailed = true;
+				}
+
+				// If this child has not been tried before
+				if (childHasFailed == false)
+					removedARoom = DropRandomRoomRecursive(children[randomChild]);
+
+				if (removedARoom == false)
+				{
+					failedChildren[failedTries] = randomChild;
+					failedTries++;
+				}
+				// The child succeeded.
+				else
+					return true;
+			}
 		}
 		// This is a leaf node.
 		else
 		{
+			Quad * roomToRemove = CurrentNode->GetRoom();
+
+			// This room can be deleted.
+			if (roomToRemove != nullptr)
+			{
+				int itemsRemoved = m_rooms.RemoveSingle(*roomToRemove);
+
+				// If this room couldn't be found things are very bad.
+				if (itemsRemoved > 0)
+				{
+					CurrentNode->SetRoom(nullptr);
+					return true;
+				}
+				else
+				{
+					// Critical situation, quad tree does not match room array.
+					UE_LOG(LogTemp, Warning,
+						TEXT("Critical error removing room: Quad tree does not agree with room list."));
+				}
+
+			}
 		}
 	}
 
