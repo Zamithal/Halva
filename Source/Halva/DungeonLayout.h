@@ -45,6 +45,8 @@
 *			Creates a complete dungeon tile map to be used. If one was already present, it is overwritten.
 *		void GenerateRooms()
 *			Generates a set of rooms and populates m_rooms.
+*		void DropRooms()
+*			Drops random rooms until the number of rooms existing is not larger than m_targetNumberRooms.
 *		void GeneratePaths()
 *			Generates a set of paths between rooms and populates m_paths.
 *		void CreateRoomLayout()
@@ -69,6 +71,9 @@
 *			added to m_rooms.
 *		Quad GenerateRandomRoom(Quad MaximumBounds)
 *			Creates a random Quad within MaximumBounds that is at least the size of m_minimumRoomSize.
+*		bool DropRandomRoomRecursive(QuadTreeNode * CurrentNode)
+*			Follows the tree down from CurrentNode until a leaf node is found. The room from this leaf
+*			node is removed from m_rooms.
 *		bool GeneratePathBetweenQuads(Quad Room1, Quad Room2)
 *			Generates a path between the two rooms passed in and places the path in m_paths.
 *		bool GenerateYAlignedPath(Quad Room1, Quad Room2)
@@ -82,11 +87,6 @@
 *		bool GenerateLBendPathWithKnownOrientation(Quad Room1, Quad Room2, bool xFirst)
 *			Attempts to generate an L bend between the two rooms. Will only attempt one direction based
 *			on the bool xFirst.
-*		Quad GetExtentsOfAllChildrenRooms(QuadTreeNode * ContainerNode)
-*			Gets a Quad that contains every room down the tree from ContainerRoom.
-*		void AdjustRoomBoundsRecursive(QuadTreeNode * CurrentNode, Quad & Extents)
-*			Follows the given node down the tree and adjusts Extents so that each room found fits inside
-*			it.
 *		void GeneratePathsRecursive(QuadTreeNode * CurrentNode)
 *			Walks down the tree connecting all siblings it finds along the way. The siblings will have at
 *			most a single connection but are guaranteed to be at least indirectly connected.
@@ -116,6 +116,9 @@
 *		QuadTreeNode m_quadTreeRoot - The root of the quad tree.
 *		TArray<Quad> m_rooms - A list of all the rooms in the dungeon.
 *		TArray<Quad> m_paths - A list of all the paths in the dungeon.
+*		int m_targetNumberRooms - The number of rooms to create on generation. If this number is too large
+*								  instead the maximum number of rooms will be given instead dependent on
+*								  level size and minimum room size.
 *		TileData ** m_dungeonLayout - Holds all the information needed to pick a tile in each element. This
 *									  will be an array of arrays but will be used as a simple 2D array.
 *		FVector m_dungeonDimensions - The maximum dimensions of the dungeon. This is how many tiles across
@@ -152,6 +155,7 @@ private:
 
 	// Dungeon generation steps
 	void GenerateRooms();
+	void DropRooms();
 	void GeneratePaths();
 	void CreateRoomLayout();
 	void CreateSpecialTiles();
@@ -163,6 +167,7 @@ private:
 	// Helper functions
 	void GenerateRoomRecursive(QuadTreeNode * CurrentNode);
 	Quad GenerateRandomRoom(Quad MaximumBounds);
+	bool DropRandomRoomRecursive(QuadTreeNode * CurrentNode);
 	bool GeneratePathBetweenQuads(Quad Room1, Quad Room2);
 	bool GenerateYAlignedPath(Quad Room1, Quad Room2);
 	bool GenerateXAlignedPath(Quad Room1, Quad Room2);
@@ -181,6 +186,7 @@ private:
 	QuadTreeNode m_quadTreeRoot;
 	TArray<Quad> m_rooms;
 	TArray<Quad> m_paths;
+	int m_targetNumRooms;
 	TileData ** m_dungeonLayout;
 	FVector m_dungeonDimensions;
 	FVector m_minimumRoomSize;

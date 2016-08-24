@@ -256,6 +256,7 @@ void DungeonLayout::SetPathWidth(int PathWidth)
 void DungeonLayout::GenerateDungeonLayout()
 {
 	GenerateRooms();
+	DropRooms();
 	GeneratePaths();
 	CreateRoomLayout();
 	//CreateSpecialTiles();
@@ -277,6 +278,20 @@ void DungeonLayout::GenerateRooms()
 {
 	m_rooms.Empty();
 	GenerateRoomRecursive(&m_quadTreeRoot);
+}
+/**********************************************************************************************************
+*	void DropRooms()
+*		Purpose:	Picks random rooms and removes them from the list of rooms until m_targetNumberRooms
+*					is reached. If m_targetNumberRooms is larger than the number of existing rooms, no
+*					action is performed.
+*
+*		Changes:
+*			m_rooms - Will be populated with a room for each quad in m_quadTreeRoot.
+**********************************************************************************************************/
+void DungeonLayout::DropRooms()
+{
+	while (m_rooms.Num() > m_targetNumRooms)
+		DropRandomRoomRecursive(&m_quadTreeRoot);
 }
 /**********************************************************************************************************
 *	void GenerateRooms()
@@ -521,6 +536,42 @@ Quad DungeonLayout::GenerateRandomRoom(Quad MaximumBounds)
 	newRoomBounds.Y = m_randomStream.RandRange((int)TopRightMin.Y, (int)TopRightMax.Y);
 
 	return Quad(newRoomBounds, newRoomPosition);
+}
+/**********************************************************************************************************
+*	bool DropRandomRoomRecursive(QuadTreeNode * CurrentNode)
+*		Purpose:	Traverses the tree from CurrentNode down looking for leaf nodes. When a leaf node is
+*					found, Its room will attempt to be deleted. If this fails (the room doesn't exist),
+*					another sibling leaf node will be attempted, If failure continues, the function will
+*					proceed up the tree trying all leaf nodes in a random order until CurrentNode is hit
+*					again. At this point, this function will return false.
+*
+*		Parameters:
+*			QuadTreeNode * CurrentNode
+*					The highest node in the tree to remove rooms from.
+*		
+*		Changes:
+*			m_rooms - A random room will be removed from m_rooms unless empty.
+*
+*		Return:		Returns true if a leaf node belonging to this tree had a room removed. false if not.
+**********************************************************************************************************/
+bool DungeonLayout::DropRandomRoomRecursive(QuadTreeNode * CurrentNode)
+{
+	if (CurrentNode != nullptr)
+	{
+		QuadTreeNode ** children = CurrentNode->GetChildren();
+
+		// Short circuit evaluation of "If the current node has children."
+		if (children != nullptr && children[0] != nullptr)
+		{
+			//Pick a random
+		}
+		// This is a leaf node.
+		else
+		{
+		}
+	}
+
+	return false;
 }
 /**********************************************************************************************************
 *	void GeneratePathBetweenQuads(Quad Room1, Quad Room2)
