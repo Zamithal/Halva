@@ -3,7 +3,7 @@ Binaries/
 DerivedDataCache/
 Intermediate/
 Saved/
-
+Content/StarterContent
 # Ignore filetypes
 *.suo
 *.sdf
