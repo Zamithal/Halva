@@ -16,6 +16,7 @@ DungeonLayout::DungeonLayout()
 	m_paths = TArray<Quad>();
 	m_minimumRoomSize = FVector(0, 0, 0);
 	m_dungeonDimensions = FVector(0, 0, 0);
+	m_targetNumRooms = 0;
 	m_quadTreeRoot = QuadTreeNode(0, Quad(), m_minimumRoomSize, FRandomStream(0));
 	m_pathWidth = 0;
 	m_dungeonLayout = nullptr;
@@ -31,12 +32,14 @@ DungeonLayout::DungeonLayout()
 *				For example, if a 32x32 size is given, 32*32 tiles will be generated.
 *			FVector MinimumRoomSize
 *				The smallest possible room that can be created. Rooms can be larger than this.
+*			int DesiredRooms
+*				The number of rooms to try and create. Given the room size and dungeon size The number of
+*				rooms created might be smaller than this but this number will attempt to be reached.
 *			int PathWidth
 *				The width of all paths between rooms.
 **********************************************************************************************************/
-DungeonLayout::DungeonLayout(FVector DungeonSize, FVector MinimumRoomSize, int PathWidth, FRandomStream RNG)
+DungeonLayout::DungeonLayout(FVector DungeonSize, FVector MinimumRoomSize, int DesiredRooms, int PathWidth, FRandomStream RNG)
 {
-
 }
 /**********************************************************************************************************
 *	DungeonLayout(const DungeonLayout & Source)
@@ -53,6 +56,7 @@ DungeonLayout::DungeonLayout(const DungeonLayout & Source)
 	m_pathWidth = Source.m_pathWidth;
 	m_dungeonDimensions = Source.m_dungeonDimensions;
 	m_minimumRoomSize = Source.m_minimumRoomSize;
+	m_targetNumRooms = Source.m_targetNumRooms;
 	m_randomStream = Source.m_randomStream;
 	m_quadTreeRoot = Source.m_quadTreeRoot;
 
@@ -118,6 +122,7 @@ DungeonLayout & DungeonLayout::operator=(const DungeonLayout & Source)
 		m_pathWidth = Source.m_pathWidth;
 		m_dungeonDimensions = Source.m_dungeonDimensions;
 		m_minimumRoomSize = Source.m_minimumRoomSize;
+		m_targetNumRooms = Source.m_targetNumRooms;
 		m_randomStream = Source.m_randomStream;
 		m_quadTreeRoot = Source.m_quadTreeRoot;
 

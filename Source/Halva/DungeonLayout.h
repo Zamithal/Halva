@@ -15,7 +15,7 @@
 *
 *		DungeonLayout();
 *			Default constructor. Generates an empty dungeon.
-*		DungeonLayout(FVector DungeonSize, FVector MinimumRoomSize, int PathWidth, FRandomStream RNG);
+*		DungeonLayout(FVector DungeonSize, FVector MinimumRoomSize, int DesiredRooms, int PathWidth, FRandomStream RNG);
 *			Constructor. Generates a dungeon that has an area of DungeonSize given that each tile has an
 *			area of 1. No rooms shall be generated that are smaller than MinimumRoomSize and all passage
 *			ways will have a width of PathWidth.
@@ -133,7 +133,7 @@ public:
 
 	// Manager functions
 	DungeonLayout();
-	DungeonLayout(FVector DungeonSize, FVector MinimumRoomSize, int PathWidth, FRandomStream RNG);
+	DungeonLayout(FVector DungeonSize, FVector MinimumRoomSize, int DesiredRooms, int PathWidth, FRandomStream RNG);
 	DungeonLayout(const DungeonLayout & source);
 	~DungeonLayout();
 
