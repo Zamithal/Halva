@@ -50,11 +50,14 @@ struct QuadSlices
 *		
 *	Methods:
 *
-*		void CreateChildren(int Depth);
+*		bool CreateChildren(int Depth);
 *			Populates the children array with 4 quads that are composed of the parent quad cut into 4
 *			slices. The slices are not equal sizes and are determined by the function Slice();.
-*		QuadSlices Slice();
-*			Slices this quad into 4 smaller quads and returns them in a QuadSlices struct.
+*		QuadSlices Slice(int PlannedDivisions);
+*			Slices up the quad into 4 random slices. The random slices are at least big enough to support
+*			PlannedDivisions rooms of minimum room size. This means that if planned divisions is 2 each 
+*			child will have enough space for 4 rooms (2 across and 2 down). A planned divisions value of 3
+*			will support 8 rooms.
 *		
 *			
 *	Data Members:
@@ -63,12 +66,13 @@ struct QuadSlices
 *		Quad m_quad - The space that makes up this quad.
 *		Quad * m_room - The room belonging to this node. This will only be ever set in leaf nodes and is
 *						not set by the node.
-*		FVector m_minimumRoomSize - The smallest room that can be generated.	
+*		FVector m_minimumQuadSize - The smallest leaf node Quad that can be generated.	
 *		FRandomStream m_stream - The random stream used to generate randomness.
 **********************************************************************************************************/
 class HALVA_API QuadTreeNode
 {
 public:
+
 	QuadTreeNode();
 	QuadTreeNode(int Depth, Quad Bounds, FVector MinimumRoomSize, FRandomStream Stream);
 	QuadTreeNode(const QuadTreeNode & source);
@@ -79,20 +83,20 @@ public:
 	Quad GetQuad();
 	Quad * GetRoom();
 	void SetRoom(Quad * Room);
-	FVector GetMinimumRoomSize();
-	void SetMinimumRoomSize(FVector MinimumRoomSize);
+	FVector GetMinimumQuadSize();
+	void SetMinimumQuadSize(FVector MinimumRoomSize);
 	FRandomStream GetRandomStream();
 	void SetRandomStream(FRandomStream RandomStream);
 
 private:
-	void CreateChildren(int Depth);
-	QuadSlices Slice();
 
+	bool CreateChildren(int Depth);
+	QuadSlices Slice(int PlannedDivisions);
 
 	QuadTreeNode * m_children[4];
 	Quad m_quad;
 	Quad * m_room;
-	FVector m_minimumRoomSize;
+	FVector m_minimumQuadSize;
 	FRandomStream m_stream;
 };
 

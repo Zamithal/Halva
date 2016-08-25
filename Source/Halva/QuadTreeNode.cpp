@@ -10,7 +10,7 @@ QuadTreeNode::QuadTreeNode()
 {
 	m_quad = Quad(FVector(0, 0, 0), FVector(0, 0, 0));
 	m_stream = FRandomStream(0);
-	m_minimumRoomSize = FVector(0, 0, 0);
+	m_minimumQuadSize = FVector(0, 0, 0);
 
 	for (int i = 0; i < 4; i++)
 		m_children[i] = nullptr;
@@ -33,11 +33,22 @@ QuadTreeNode::QuadTreeNode()
 QuadTreeNode::QuadTreeNode(int Depth, Quad Bounds, FVector MinimumRoomSize, FRandomStream Stream)
 {
 	m_quad = Bounds;
-	m_minimumRoomSize = MinimumRoomSize;
+	m_minimumQuadSize = MinimumRoomSize;
 	m_stream = Stream;
 
-	if (Depth > 0)
-		CreateChildren(Depth);
+	bool childrenMade = false;
+	
+	// Attempt to make a quad tree with the given depth, if it cant be done try a smaller depth until it
+	// can be done.
+	while (childrenMade != true)
+	{
+		if (Depth > 0)
+			childrenMade = CreateChildren(Depth);
+		else
+			break;
+		Depth--;
+
+	}
 }
 /**********************************************************************************************************
 *	QuadTreeNode(const QuadTreeNode & Source)
@@ -51,7 +62,7 @@ QuadTreeNode::QuadTreeNode(const QuadTreeNode & Source)
 {
 	m_quad = Source.m_quad;
 	m_stream = Source.m_stream;
-	m_minimumRoomSize = Source.m_minimumRoomSize;
+	m_minimumQuadSize = Source.m_minimumQuadSize;
 
 	for (int i = 0; i < 4; i++)
 		if (Source.m_children[i] != nullptr)
@@ -73,7 +84,7 @@ QuadTreeNode & QuadTreeNode::operator=(const QuadTreeNode & Source)
 	{
 		m_quad = Source.m_quad;
 		m_stream = Source.m_stream;
-		m_minimumRoomSize = Source.m_minimumRoomSize;
+		m_minimumQuadSize = Source.m_minimumQuadSize;
 
 		for (int i = 0; i < 4; i++)
 			if (Source.m_children[i] != nullptr)
@@ -101,31 +112,48 @@ QuadTreeNode::~QuadTreeNode()
 	}
 }
 /**********************************************************************************************************
-*	void CreateChildren(int Depth)
+*	bool CreateChildren(int Depth)
 *		Purpose:	Causes this node's children to generate. The children will have quads that sum to the
 *					area of the parent but are not equal slices. If a depth of greater than 1 is,
-*					specified, this function will recurse dividing each child node as well.
+*					specified, this function will recurse dividing each child node as well. If the node
+*					does not have enough space to support the number divisions requested, false will be
+*					returned and no divisions will be made.
 *
 *		Parameters: 
 *			int Depth
 *				The number of times to cut the children. If 1 4 children will be created, if 2,
 *				Those children will be sliced creating 16 leaf nodes and so on.
 *
-*		Changes:	m_children will be populated.
+*		Changes:	m_children can be populated.
+*
+*		Return - Returns if the children were created. If not enough space is given the children might not
+*				 be created.
 **********************************************************************************************************/
-void QuadTreeNode::CreateChildren(int Depth)
+bool QuadTreeNode::CreateChildren(int Depth)
 {
-	QuadSlices childQuads = Slice();
+	// Don't create anymore children if 4 children won't fit in any scenario.
+	FVector QuadSize = m_quad.GetBounds() - m_quad.GetPosition();
 
-	for (int i = 0; i < 4; i++)
-		if (m_children[i] == nullptr)
-			delete m_children[i];
+	bool willFit = true;
 
-	m_children[0] = new QuadTreeNode(Depth - 1, childQuads.southWest, m_minimumRoomSize, m_stream);
-	m_children[1] = new QuadTreeNode(Depth - 1, childQuads.northWest, m_minimumRoomSize, m_stream);
-	m_children[2] = new QuadTreeNode(Depth - 1, childQuads.northEast, m_minimumRoomSize, m_stream);
-	m_children[3] = new QuadTreeNode(Depth - 1, childQuads.southEast, m_minimumRoomSize, m_stream);
+	willFit = willFit && QuadSize.X >= m_minimumQuadSize.X * pow(2, Depth);
+	willFit = willFit && QuadSize.Y >= m_minimumQuadSize.Y * pow(2, Depth);
 
+	if (willFit)
+	{
+		QuadSlices childQuads = Slice(Depth);
+
+		for (int i = 0; i < 4; i++)
+			if (m_children[i] == nullptr)
+				delete m_children[i];
+
+		m_children[0] = new QuadTreeNode(Depth - 1, childQuads.southWest, m_minimumQuadSize, m_stream);
+		m_children[1] = new QuadTreeNode(Depth - 1, childQuads.northWest, m_minimumQuadSize, m_stream);
+		m_children[2] = new QuadTreeNode(Depth - 1, childQuads.northEast, m_minimumQuadSize, m_stream);
+		m_children[3] = new QuadTreeNode(Depth - 1, childQuads.southEast, m_minimumQuadSize, m_stream);
+	}
+
+	return willFit;
 }
 /**********************************************************************************************************
 *	QuadSlices Slice()
@@ -133,48 +161,51 @@ void QuadTreeNode::CreateChildren(int Depth)
 *					of their area will add up to the area of this quad. The 4 quads will be returned as
 *					a QuadSlices struct which just contains 4 quads.
 *
-*		Return:		Returns a QuadSlices struct containing 4 quads. These quads will sum to the original
-*					quad sliced into 4ths.
+*		Parameters:
+*			int PlannedDivisions
+*				The number times this quad will be sliced up. This parameter changes the minimum size of
+*				this quad to support at least 2^X minimuimRoomSized Quads. If the number of divisions
+*				results in more rooms than can ever fit in the quad, empty quads are returned (size of 0).
 *
-*		Changes:	None.
+*		Return - Returns a QuadSlices struct containing 4 quads. These quads will sum to the original
+*					quad sliced into 4ths.
 **********************************************************************************************************/
-QuadSlices QuadTreeNode::Slice()
+QuadSlices QuadTreeNode::Slice(int PlannedDivisions)
 {
 	QuadSlices slicedUp;
 
 	FVector quadBounds = m_quad.GetBounds();
 	FVector quadOffset = m_quad.GetPosition();
 
-	// Throw out any decimals the user might have entered.
-	quadBounds = FVector(floor(quadBounds.X), floor(quadBounds.Y), floor(quadBounds.Z));
-	quadOffset = FVector(floor(quadOffset.X), floor(quadOffset.Y), floor(quadOffset.Z));
-
 	// define the minimum and maximum slice locations.
-	int minX = (int)m_minimumRoomSize.X;
-	int minY = (int)m_minimumRoomSize.Y;
+	// 1 is subtracted because this is a division.
+	int minX = (int)m_minimumQuadSize.X * pow(2, PlannedDivisions - 1);
+	int minY = (int)m_minimumQuadSize.Y * pow(2, PlannedDivisions - 1);
 
-	int maxX = ((int)quadBounds.X - (int)m_minimumRoomSize.X);
-	int maxY = ((int)quadBounds.Y - (int)m_minimumRoomSize.Y);
+	int maxX = ((int)quadBounds.X - (int)m_minimumQuadSize.X) * pow(2, PlannedDivisions - 1);
+	int maxY = ((int)quadBounds.Y - (int)m_minimumQuadSize.Y) * pow(2, PlannedDivisions - 1);
 
+	if (maxX >= minX && maxY >= minY)
+	{
+		int xSlice = m_stream.RandRange(minX, maxX);
+		int ySlice = m_stream.RandRange(minY, maxY);
 
-	int xSlice = m_stream.RandRange(minX, maxX);
-	int ySlice = m_stream.RandRange(minY, maxY);
+		// Bottom left quad.
+		slicedUp.southWest.SetPosition(quadOffset);
+		slicedUp.southWest.SetBounds(FVector(xSlice, ySlice, 0));
 
-	// Bottom left quad.
-	slicedUp.southWest.SetPosition(quadOffset);
-	slicedUp.southWest.SetBounds(FVector(xSlice, ySlice, 0));
+		// Bottom right quad.
+		slicedUp.southEast.SetPosition(FVector(xSlice + quadOffset.X, quadOffset.Y, 0));
+		slicedUp.southEast.SetBounds(FVector(quadBounds.X - xSlice, ySlice, 0));
 
-	// Bottom right quad.
-	slicedUp.southEast.SetPosition(FVector(xSlice + quadOffset.X, quadOffset.Y, 0));
-	slicedUp.southEast.SetBounds(FVector(quadBounds.X - xSlice, ySlice, 0));
+		// Top left quad.
+		slicedUp.southWest.SetPosition(FVector(quadOffset.X, quadOffset.Y + ySlice, 0));
+		slicedUp.southWest.SetBounds(FVector(xSlice, quadBounds.Y - ySlice, 0));
 
-	// Top left quad.
-	slicedUp.southWest.SetPosition(FVector(quadOffset.X, quadOffset.Y + ySlice, 0));
-	slicedUp.southWest.SetBounds(FVector(xSlice, quadBounds.Y - ySlice, 0));
-
-	// Top right quad.
-	slicedUp.northEast.SetPosition(FVector(quadOffset.X + xSlice, quadOffset.Y + ySlice, 0));
-	slicedUp.northEast.SetBounds(FVector(quadBounds.X - xSlice, quadBounds.Y - ySlice, 0));
+		// Top right quad.
+		slicedUp.northEast.SetPosition(FVector(quadOffset.X + xSlice, quadOffset.Y + ySlice, 0));
+		slicedUp.northEast.SetBounds(FVector(quadBounds.X - xSlice, quadBounds.Y - ySlice, 0));
+	}
 
 	return slicedUp;
 }
@@ -211,20 +242,20 @@ void QuadTreeNode::SetRoom(Quad * Room)
 	m_room = Room;
 }
 /**********************************************************************************************************
-*		FVector GetMinimumRoomSize()
+*		FVector GetMinimumQuadSize()
 *		Purpose:	Getter.
 **********************************************************************************************************/
-FVector QuadTreeNode::GetMinimumRoomSize()
+FVector QuadTreeNode::GetMinimumQuadSize()
 {
-	return m_minimumRoomSize;
+	return m_minimumQuadSize;
 }
 /**********************************************************************************************************
-*	void SetMinimumRoomSize(FVector MinimumRoomSize)
+*	void SetMinimumQuadSize(FVector MinimumRoomSize)
 *		Purpose:	Setter.
 **********************************************************************************************************/
-void QuadTreeNode::SetMinimumRoomSize(FVector MinimumRoomSize)
+void QuadTreeNode::SetMinimumQuadSize(FVector MinimumRoomSize)
 {
-	m_minimumRoomSize = MinimumRoomSize;
+	m_minimumQuadSize = MinimumRoomSize;
 }
 /**********************************************************************************************************
 *	FRandomStream GetRandomStream()
