@@ -16,7 +16,7 @@ QuadTreeNode::QuadTreeNode()
 		m_children[i] = nullptr;
 }
 /**********************************************************************************************************
-*	QuadTreeNode(int Depth, Quad Bounds, FVector MinimumRoomSize, FRandomStream Stream)
+*	QuadTreeNode(int Depth, Quad Bounds, FVector MinimumQuadSize, FRandomStream Stream)
 *		Purpose:	Constructor. Recursively creates children node until depth reaches 0. The children will
 *					be their parent sliced up into 4ths. No slice shall be smaller than minimum room size
 *					and the size of each slice is randomized. Stream is used for randomization.
@@ -25,15 +25,15 @@ QuadTreeNode::QuadTreeNode()
 *			int Depth
 *				The number of times to create children. If 1, 4 children will be created. If 2, those 4
 *				children will have 4 children and so on.
-*			FVector MinimumRoomSize
-*				The smallest possible room that can be built.
+*			FVector MinimumQuadSize
+*				The smallest possible leaf node Quad that can be built.
 *			FRandomStream Stream
 *				A random stream object to generate randomness.
 **********************************************************************************************************/
-QuadTreeNode::QuadTreeNode(int Depth, Quad Bounds, FVector MinimumRoomSize, FRandomStream Stream)
+QuadTreeNode::QuadTreeNode(int Depth, Quad Bounds, FVector MinimumQuadSize, FRandomStream Stream)
 {
 	m_quad = Bounds;
-	m_minimumQuadSize = MinimumRoomSize;
+	m_minimumQuadSize = MinimumQuadSize;
 	m_stream = Stream;
 
 	bool childrenMade = false;

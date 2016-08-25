@@ -40,6 +40,36 @@ DungeonLayout::DungeonLayout()
 **********************************************************************************************************/
 DungeonLayout::DungeonLayout(FVector DungeonSize, FVector MinimumRoomSize, int DesiredRooms, int PathWidth, FRandomStream RNG)
 {
+	// Get the number of cuts to make. This is log4(DesiredRooms) rounded up.
+	int Depth = ceil(log(DesiredRooms) / log(4));
+
+	Quad DungeonBounds = Quad(DungeonSize, FVector(0, 0, 0));
+
+	m_quadTreeRoot = QuadTreeNode(Depth, DungeonBounds, MinimumRoomSize, RNG);
+
+	m_rooms = TArray<Quad>();
+	m_paths = TArray<Quad>();
+
+	m_targetNumRooms = DesiredRooms;
+
+	m_dungeonDimensions = DungeonSize;
+
+	m_dungeonLayout = new TileData *[m_dungeonDimensions.Y];
+
+	for (int i = 0; i < m_dungeonDimensions.Y; i++)
+	{
+		m_dungeonLayout[i] = new TileData[m_dungeonDimensions.X];
+	}
+	// Initialize dungeon layout.
+	ClearDungeonLayout();
+
+	m_minimumRoomSize = MinimumRoomSize;
+	m_pathWidth = PathWidth;
+
+	m_randomStream = RNG;
+
+	// Create Dungeon.
+	GenerateDungeonLayout();
 }
 /**********************************************************************************************************
 *	DungeonLayout(const DungeonLayout & Source)

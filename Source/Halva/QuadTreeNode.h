@@ -21,7 +21,7 @@ struct QuadSlices
 *
 *	Manager Functions:
 *
-*		QuadTreeNode(FVector Bounds, FVector offset, FVector MinimumRoomSize, FRandomStream Stream);
+*		QuadTreeNode(FVector Bounds, FVector offset, FVector MinimumQuadSize, FRandomStream Stream);
 *			Creates a new node in the quad tree and recursively creates children beneath it. If depth is
 *			set to 1, no children will be created. If set to 2, 1 set of children will be created. 2 will
 *			cause the children to have children and so forth.
@@ -74,7 +74,7 @@ class HALVA_API QuadTreeNode
 public:
 
 	QuadTreeNode();
-	QuadTreeNode(int Depth, Quad Bounds, FVector MinimumRoomSize, FRandomStream Stream);
+	QuadTreeNode(int Depth, Quad Bounds, FVector MinimumQuadSize, FRandomStream Stream);
 	QuadTreeNode(const QuadTreeNode & source);
 	QuadTreeNode & operator=(const QuadTreeNode & source);
 	~QuadTreeNode();
