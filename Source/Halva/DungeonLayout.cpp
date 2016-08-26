@@ -54,7 +54,7 @@ DungeonLayout::DungeonLayout(FVector DungeonSize, FVector MinimumRoomSize, int D
 	m_paths = TArray<Quad>();
 
 	m_targetNumRooms = DesiredRooms;
-
+	m_dungeonLayout = nullptr;
 	m_dungeonDimensions = DungeonSize;
 
 	m_dungeonLayout = new TileData *[m_dungeonDimensions.Y];
@@ -180,8 +180,10 @@ DungeonLayout & DungeonLayout::operator=(const DungeonLayout & Source)
 		if (m_dungeonLayout != nullptr)
 		{
 			for (int i = 0; i < yTileNumber; i++)
+			{
 				delete[] m_dungeonLayout[i];
-
+				m_dungeonLayout[i] = nullptr;
+			}
 			delete[] m_dungeonLayout;
 			m_dungeonLayout = nullptr;
 		}

@@ -11,6 +11,7 @@ QuadTreeNode::QuadTreeNode()
 	m_quad = Quad(FVector(0, 0, 0), FVector(0, 0, 0));
 	m_stream = FRandomStream(0);
 	m_minimumQuadSize = FVector(0, 0, 0);
+	m_room = nullptr;
 
 	for (int i = 0; i < 4; i++)
 		m_children[i] = nullptr;
@@ -35,6 +36,7 @@ QuadTreeNode::QuadTreeNode(int Depth, Quad Bounds, FVector MinimumQuadSize, FRan
 	m_quad = Bounds;
 	m_minimumQuadSize = MinimumQuadSize;
 	m_stream = Stream;
+	m_room = nullptr;
 
 	bool childrenMade = false;
 	
@@ -53,7 +55,6 @@ QuadTreeNode::QuadTreeNode(int Depth, Quad Bounds, FVector MinimumQuadSize, FRan
 			else
 				break;
 			Depth--;
-
 		}
 	}
 }
@@ -73,8 +74,12 @@ QuadTreeNode::QuadTreeNode(const QuadTreeNode & Source)
 	m_room = Source.m_room;
 
 	for (int i = 0; i < 4; i++)
+	{
+		m_children[i] = nullptr;
+
 		if (Source.m_children[i] != nullptr)
 			m_children[i] = new QuadTreeNode(*(Source.m_children[i]));
+	}
 }
 /**********************************************************************************************************
 *	QuadTreeNode & operator=(const QuadTreeNode & Source)
@@ -96,12 +101,15 @@ QuadTreeNode & QuadTreeNode::operator=(const QuadTreeNode & Source)
 		m_room = Source.m_room;
 
 		for (int i = 0; i < 4; i++)
+		{
+			if (m_children[i] != nullptr)
+				delete m_children[i];
+
+			m_children[i] = nullptr;
+
 			if (Source.m_children[i] != nullptr)
-			{
-				if (m_children[i] != nullptr)
-					delete m_children[i];
 				m_children[i] = new QuadTreeNode(*Source.m_children[i]);
-			}
+		}
 	}
 	return *this;
 }
