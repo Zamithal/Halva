@@ -26,8 +26,19 @@ void AProceduralDungeon::Tick( float DeltaTime )
 
 }
 
-
+/**********************************************************************************************************
+*	void GenerateTiles()
+*		Purpose:	Creates a dungeon layout and places a tile at each location in the layout. The tile
+*					chosen must match the type stated by the layout but can be of any variety provided in
+*					its respective array. Example: If a floor tile is required, any floor tile from
+*					floorTiles could be chosen for that location. If the required tile type has no valid
+*					tile meshes, no mesh is picked.
+*
+*		Changes:
+*			m_tiles - Static meshes instances will be created for each tile if possible.
+**********************************************************************************************************/
 void AProceduralDungeon::GenerateTiles()
 {
-
+	// Nested containers are not supported by UE4.
+	//tiles.Empty();
 }

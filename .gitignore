@@ -3,7 +3,9 @@ Binaries/
 DerivedDataCache/
 Intermediate/
 Saved/
-Content/StarterContent
+Content/StarterContent/
+ipch/
+
 # Ignore filetypes
 *.suo
 *.sdf

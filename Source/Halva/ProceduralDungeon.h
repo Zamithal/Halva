@@ -30,6 +30,24 @@
 *			created.
 *		
 *	Data Members:
+*		int RandomSeed - The random seed to generate a dungeon with.
+*		TArray<class UStaticMesh *> EmptyTiles - An array containing a list of all the types of tiles that
+*												 could be used when an empty tile is required.
+*		TArray<class UStaticMesh *> floorTiles - An array containing a list of all the types of tiles that
+*												 could be used when an floor tile is required.
+*		TArray<class UStaticMesh *> wallTiles - An array containing a list of all the types of tiles that
+*												 could be used when an wall tile is required.
+*		TArray<class UStaticMesh *> outsideCornerTiles - An array containing a list of all the types of 
+*														 tiles that could be used when an outside corner
+*														 tile is required.
+*		TArray<class UStaticMesh *> insideCornerTiles - An array containing a list of all the types
+*														of tiles that could be used when an inside corner
+*														tile is required.
+*		TArray<UInstancedStaticMeshComponent *> emptyTiles - Container for actual mesh.
+*		TArray<UInstancedStaticMeshComponent *> floorTiles - Container for actual mesh.
+*		TArray<UInstancedStaticMeshComponent *> wallTiles - Container for actual mesh.
+*		TArray<UInstancedStaticMeshComponent *> outsideCornerTiles - Container for actual mesh.
+*		TArray<UInstancedStaticMeshComponent *> insideCornerTiles - Container for actual mesh.
 **********************************************************************************************************/
 UCLASS()
 class HALVA_API AProceduralDungeon : public AActor
@@ -49,19 +67,38 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "ProceduralLevel")
 		void GenerateTiles();
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tiles")
-		TArray<class UStaticMesh *> EmptyTiles;
+	// UE4 Does not allow nested containers to interact with blueprints.
+	// Because of this parallel arrays will be used instead of nested arrays.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "RandomSeed")
+		int RandomSeed;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tiles")
-		TArray<class UStaticMesh *> FloorTiles;
+		TArray<class UStaticMesh *> emptyTileTypes;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tiles")
-		TArray<class UStaticMesh *> WallTiles;
+		TArray<class UStaticMesh *> floorTileTypes;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tiles")
-		TArray<class UStaticMesh *> InsideCornerTiles;
+		TArray<class UStaticMesh *> wallTileTypes;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tiles")
-		TArray<class UStaticMesh *> OutsideCornerTiles;
-	
+		TArray<class UStaticMesh *> insideCornerTileTypes;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tiles")
+		TArray<class UStaticMesh *> outsideCornerTileTypes;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Tiles")
+		TArray<UInstancedStaticMeshComponent *> emptyTiles;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Tiles")
+		TArray<UInstancedStaticMeshComponent *> floorTiles;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Tiles")
+		TArray<UInstancedStaticMeshComponent *> wallTiles;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Tiles")
+		TArray<UInstancedStaticMeshComponent *> outsideCornerTiles;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Tiles")
+		TArray<UInstancedStaticMeshComponent *> insideCornerTiles;
 };
