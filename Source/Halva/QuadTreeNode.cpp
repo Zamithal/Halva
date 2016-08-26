@@ -38,16 +38,20 @@ QuadTreeNode::QuadTreeNode(int Depth, Quad Bounds, FVector MinimumQuadSize, FRan
 
 	bool childrenMade = false;
 	
-	// Attempt to make a quad tree with the given depth, if it cant be done try a smaller depth until it
-	// can be done.
-	while (childrenMade != true)
+	// If the quad is 0 sized don't do anything.
+	if (m_quad.GetBounds().X > 0 && m_quad.GetBounds().Y > 0)
 	{
-		if (Depth > 0)
-			childrenMade = CreateChildren(Depth);
-		else
-			break;
-		Depth--;
+		// Attempt to make a quad tree with the given depth, if it cant be done try a smaller depth until
+		//it can be done.
+		while (childrenMade != true)
+		{
+			if (Depth > 0)
+				childrenMade = CreateChildren(Depth);
+			else
+				break;
+			Depth--;
 
+		}
 	}
 }
 /**********************************************************************************************************

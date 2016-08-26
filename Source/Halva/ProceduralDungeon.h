@@ -28,6 +28,8 @@
 *			Generates a new set of tiles for the level using the tile arrays. The layout of the dungeon is
 *			dependent on the random seed. If no tiles are in the particular array, instead nothing will be
 *			created.
+*		InitializeTileArrays()
+*			Empties each tile array and sets its static mesh to the corresponding static mesh in types.
 *		
 *	Data Members:
 *		int RandomSeed - The random seed to generate a dungeon with.
@@ -67,10 +69,21 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "ProceduralLevel")
 		void GenerateTiles();
 
+	void InitializeTileArrays();
+
 	// UE4 Does not allow nested containers to interact with blueprints.
 	// Because of this parallel arrays will be used instead of nested arrays.
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "RandomSeed")
-		int RandomSeed;
+		int randomSeed;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DungeonLayout")
+		FVector dungeonSize;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DungeonLayout")
+		FVector smallestRoomSize;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DungeonLayout")
+		int desiredRooms;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DungeonLayout")
+		int pathWidth;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tiles")
 		TArray<class UStaticMesh *> emptyTileTypes;
@@ -101,4 +114,7 @@ public:
 
 	UPROPERTY(BlueprintReadOnly, Category = "Tiles")
 		TArray<UInstancedStaticMeshComponent *> insideCornerTiles;
+
+private:
+	FRandomStream randomStream;
 };

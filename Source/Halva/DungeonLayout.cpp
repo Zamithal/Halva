@@ -41,7 +41,10 @@ DungeonLayout::DungeonLayout()
 DungeonLayout::DungeonLayout(FVector DungeonSize, FVector MinimumRoomSize, int DesiredRooms, int PathWidth, FRandomStream RNG)
 {
 	// Get the number of cuts to make. This is log4(DesiredRooms) rounded up.
-	int Depth = ceil(log(DesiredRooms) / log(4));
+	int Depth = 1;
+
+	if (DesiredRooms > 0)
+		Depth = ceil(log(DesiredRooms) / log(4));
 
 	Quad DungeonBounds = Quad(DungeonSize, FVector(0, 0, 0));
 
@@ -68,8 +71,19 @@ DungeonLayout::DungeonLayout(FVector DungeonSize, FVector MinimumRoomSize, int D
 
 	m_randomStream = RNG;
 
-	// Create Dungeon.
-	GenerateDungeonLayout();
+	// Verify all operands are valid before attempting to make the dungeon.
+	bool OKToGenerate = true;
+
+	// Verify that the dungeon will have area.
+	OKToGenerate = OKToGenerate && floor(DungeonSize.X) > 0 && floor(DungeonSize.Y) > 0;
+	// Verify the paths will have area.
+	OKToGenerate = OKToGenerate && PathWidth > 0;
+
+	if (OKToGenerate)
+	{
+		// Create Dungeon.
+		GenerateDungeonLayout();
+	}
 }
 /**********************************************************************************************************
 *	DungeonLayout(const DungeonLayout & Source)
