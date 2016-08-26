@@ -13,14 +13,15 @@ AProceduralDungeon::AProceduralDungeon()
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
-	randomStream = FRandomStream(randomSeed);
+	m_randomStream = FRandomStream(randomSeed);
+
+	GenerateTiles();
 }
 
 // Called when the game starts or when spawned
 void AProceduralDungeon::BeginPlay()
 {
 	Super::BeginPlay();
-	GenerateTiles();
 }
 
 // Called every frame
@@ -49,7 +50,7 @@ void AProceduralDungeon::GenerateTiles()
 {
 	InitializeTileArrays();
 
-	DungeonLayout newDungeon = DungeonLayout(dungeonSize, smallestRoomSize, desiredRooms, pathWidth, randomStream);
+	m_dungeonLayout = DungeonLayout(dungeonSize, smallestRoomSize, desiredRooms, pathWidth, m_randomStream);
 }
 /**********************************************************************************************************
 *	void InitializeTileArrays()
@@ -106,4 +107,19 @@ void AProceduralDungeon::InitializeTileArrays()
 		insideCornerTiles[i]->SetStaticMesh(insideCornerTileTypes[i]);
 	}
 
+}
+/**********************************************************************************************************
+*	void CreateTileMeshes()
+*		Purpose:	Constructs the meshes for the tiles. The location and rotation of each tile is
+*					determined by the dungeonLayout.
+*
+*		Changes:
+*			emptyTiles - Tiles will be added.
+*			floorTiles - Tiles will be added.
+*			wallTiles - Tiles will be added.
+*			outsideCornerTiles - Tiles will be added.
+*			insideCornerTiles - Tiles will be added.
+**********************************************************************************************************/
+void AProceduralDungeon::CreateTileMeshes()
+{
 }

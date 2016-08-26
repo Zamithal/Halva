@@ -523,8 +523,14 @@ void DungeonLayout::GenerateRoomRecursive(QuadTreeNode * CurrentNode)
 		// should never be nullptr but check anyway.
 		if (children != nullptr)
 		{
-			// If the first child is not set none of them are. That makes this a leaf node.
+			// If the first child is set they all are, call this on each child.
 			if (children[0] != nullptr)
+			{
+				for (int i = 0; i < 4; i++)
+					GenerateRoomRecursive(children[i]);
+			}
+			// else this is a leaf node, create a random room for it.
+			else
 			{
 				// Add the room to the list of rooms.
 				int tArrayIndex = m_rooms.Add(GenerateRandomRoom(CurrentNode->GetQuad()));
@@ -532,10 +538,6 @@ void DungeonLayout::GenerateRoomRecursive(QuadTreeNode * CurrentNode)
 				// Set this node's room to point at the newly created room.
 				CurrentNode->SetRoom(&m_rooms[tArrayIndex]);
 			}
-			// else call this on the children.
-			else
-				for (int i = 0; i < 4; i++)
-					GenerateRoomRecursive(children[i]);
 		}
 	}
 
@@ -556,10 +558,10 @@ Quad DungeonLayout::GenerateRandomRoom(Quad MaximumBounds)
 	FVector MaximumSize = MaximumBounds.GetBounds();
 	FVector MaximumPosition = MaximumBounds.GetPosition();
 
-	FVector BottomLeftMin;
-	FVector BottomLeftMax;
-	FVector TopRightMin;
-	FVector TopRightMax;
+	FVector BottomLeftMin = FVector(0, 0, 0);
+	FVector BottomLeftMax = FVector(0, 0, 0);
+	FVector TopRightMin = FVector(0, 0, 0);
+	FVector TopRightMax = FVector(0, 0, 0);
 
 	// The closest position the bottom left corner can be to the bottom left corner of the quad and still
 	// generate a room of minimumSize.
@@ -569,20 +571,21 @@ Quad DungeonLayout::GenerateRandomRoom(Quad MaximumBounds)
 	// room of at least minimumSize.
 	BottomLeftMax = MaximumSize + MaximumPosition - m_minimumRoomSize;
 
-	// The closest position the top right corner can be to the bottom left of the quad and still
-	// generate a room of minimumSize.
-	TopRightMin = MaximumPosition + m_minimumRoomSize;
-
-	// The closest position the top right corner can be to the top right corner of the quad and still
-	// generate a room of minimumSize.
-	TopRightMin = MaximumSize + MaximumPosition;
-
-	FVector newRoomPosition;
-	FVector newRoomBounds;
-
+	// Pick a random bottom left corner.
+	FVector newRoomPosition = FVector(0, 0, 0);
 	newRoomPosition.X = m_randomStream.RandRange((int)BottomLeftMin.X, (int)BottomLeftMax.X);
 	newRoomPosition.Y = m_randomStream.RandRange((int)BottomLeftMin.Y, (int)BottomLeftMax.Y);
 
+	// The closest position the top right corner can be to the bottom left of the quad and still
+	// generate a room of minimumSize.
+	TopRightMin = newRoomPosition + m_minimumRoomSize;
+
+	// The closest position the top right corner can be to the top right corner of the quad and still
+	// generate a room of minimumSize.
+	TopRightMax = MaximumSize + MaximumPosition;
+
+	// Pick a random top right corner.
+	FVector newRoomBounds = FVector(0, 0, 0);
 	newRoomBounds.X = m_randomStream.RandRange((int)TopRightMin.X, (int)TopRightMax.X);
 	newRoomBounds.Y = m_randomStream.RandRange((int)TopRightMin.Y, (int)TopRightMax.Y);
 

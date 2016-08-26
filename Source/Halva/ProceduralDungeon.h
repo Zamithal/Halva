@@ -30,9 +30,17 @@
 *			created.
 *		InitializeTileArrays()
 *			Empties each tile array and sets its static mesh to the corresponding static mesh in types.
+*		CreateTileMeshes()
+*			Takes the data from the dungeon layout and creates tiles. Tiles are instanced static meshes and
+*			there is one for each tile type specified.
 *		
 *	Data Members:
 *		int RandomSeed - The random seed to generate a dungeon with.
+*		FVector dungeonSize - The total number of tiles in each direction. 100x100 is 100 tiles across each.
+*		FVector smallestRoomSize - The smallest number of tiles a room can be in each direction.
+*		int desiredRooms - The number of rooms to attempt to make.
+*		int pathWidth - The width of paths connecting rooms.
+*		FVector tileDimensions - How big each tile is in unreal units. Affects spacing of each tile.
 *		TArray<class UStaticMesh *> EmptyTiles - An array containing a list of all the types of tiles that
 *												 could be used when an empty tile is required.
 *		TArray<class UStaticMesh *> floorTiles - An array containing a list of all the types of tiles that
@@ -50,6 +58,8 @@
 *		TArray<UInstancedStaticMeshComponent *> wallTiles - Container for actual mesh.
 *		TArray<UInstancedStaticMeshComponent *> outsideCornerTiles - Container for actual mesh.
 *		TArray<UInstancedStaticMeshComponent *> insideCornerTiles - Container for actual mesh.
+*		FRandomStream m_randomStream - Allows levels to be randomized but consistent through a seed.
+*		DungeonLayout m_dungeonLayout - Contains the layout information for the dungeon.
 **********************************************************************************************************/
 UCLASS()
 class HALVA_API AProceduralDungeon : public AActor
@@ -66,16 +76,10 @@ public:
 	// Called every frame
 	virtual void Tick( float DeltaSeconds ) override;
 
-	UFUNCTION(BlueprintCallable, Category = "ProceduralLevel")
-		void GenerateTiles();
+	void GenerateTiles();
 
-	void InitializeTileArrays();
-
-	// UE4 Does not allow nested containers to interact with blueprints.
-	// Because of this parallel arrays will be used instead of nested arrays.
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "RandomSeed")
 		int randomSeed;
-
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DungeonLayout")
 		FVector dungeonSize;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DungeonLayout")
@@ -84,7 +88,11 @@ public:
 		int desiredRooms;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DungeonLayout")
 		int pathWidth;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DungeonLayout")
+		FVector tileDimensions;
 
+	// UE4 Does not allow nested containers to interact with blueprints.
+	// Because of this parallel arrays will be used instead of nested arrays.
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tiles")
 		TArray<class UStaticMesh *> emptyTileTypes;
 
@@ -116,5 +124,10 @@ public:
 		TArray<UInstancedStaticMeshComponent *> insideCornerTiles;
 
 private:
-	FRandomStream randomStream;
+
+	void InitializeTileArrays();
+	void CreateTileMeshes();
+
+	FRandomStream m_randomStream;
+	DungeonLayout m_dungeonLayout;
 };
