@@ -85,10 +85,10 @@ bool Quad::operator==(const Quad & rhs) const
 {
 	bool equal = true;
 
-	if (m_position != rhs.m_position)
+	if (m_position != rhs.GetPosition())
 		equal = false;
 
-	if (m_bounds != rhs.m_bounds)
+	if (m_bounds != rhs.GetPosition())
 		equal = false;
 
 	return equal;
@@ -97,7 +97,7 @@ bool Quad::operator==(const Quad & rhs) const
 *	FVector GetBounds()
 *		Purpose:	Getter.
 **********************************************************************************************************/
-FVector Quad::GetBounds()
+FVector Quad::GetBounds() const
 {
 	return m_bounds;
 }
@@ -113,7 +113,7 @@ void Quad::SetBounds(FVector NewBounds)
 *	FVector GetPosition()
 *		Purpose:	Getter.
 **********************************************************************************************************/
-FVector Quad::GetPosition()
+FVector Quad::GetPosition() const
 {
 	return m_position;
 }

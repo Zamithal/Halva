@@ -5,6 +5,8 @@ Intermediate/
 Saved/
 Content/StarterContent/
 ipch/
+Build/
+Debug/
 
 # Ignore filetypes
 *.suo

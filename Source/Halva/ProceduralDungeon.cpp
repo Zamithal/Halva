@@ -20,7 +20,7 @@ AProceduralDungeon::AProceduralDungeon()
 void AProceduralDungeon::BeginPlay()
 {
 	Super::BeginPlay();
-	
+	GenerateTiles();
 }
 
 // Called every frame

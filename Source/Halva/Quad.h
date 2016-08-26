@@ -48,9 +48,9 @@ public:
 	Quad & operator=(const Quad & source);
 	bool operator==(const Quad & rhs) const;
 
-	FVector GetBounds();
+	FVector GetBounds() const;
 	void SetBounds(FVector newBounds);
-	FVector GetPosition();
+	FVector GetPosition() const;
 	void SetPosition(FVector newPosition);
 
 private:

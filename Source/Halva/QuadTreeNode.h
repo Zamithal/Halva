@@ -80,12 +80,12 @@ public:
 	~QuadTreeNode();
 
 	QuadTreeNode ** GetChildren();
-	Quad GetQuad();
-	Quad * GetRoom();
+	Quad GetQuad() const;
+	Quad * GetRoom() const;
 	void SetRoom(Quad * Room);
-	FVector GetMinimumQuadSize();
+	FVector GetMinimumQuadSize() const;
 	void SetMinimumQuadSize(FVector MinimumRoomSize);
-	FRandomStream GetRandomStream();
+	FRandomStream GetRandomStream() const;
 	void SetRandomStream(FRandomStream RandomStream);
 
 private:

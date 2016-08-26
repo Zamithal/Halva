@@ -38,6 +38,9 @@ QuadTreeNode::QuadTreeNode(int Depth, Quad Bounds, FVector MinimumQuadSize, FRan
 
 	bool childrenMade = false;
 	
+	for (int i = 0; i < 4; i++)
+		m_children[i] = nullptr;
+
 	// If the quad is 0 sized don't do anything.
 	if (m_quad.GetBounds().X > 0 && m_quad.GetBounds().Y > 0)
 	{
@@ -67,10 +70,11 @@ QuadTreeNode::QuadTreeNode(const QuadTreeNode & Source)
 	m_quad = Source.m_quad;
 	m_stream = Source.m_stream;
 	m_minimumQuadSize = Source.m_minimumQuadSize;
+	m_room = Source.m_room;
 
 	for (int i = 0; i < 4; i++)
 		if (Source.m_children[i] != nullptr)
-			m_children[i] = new QuadTreeNode(*Source.m_children[i]);
+			m_children[i] = new QuadTreeNode(*(Source.m_children[i]));
 }
 /**********************************************************************************************************
 *	QuadTreeNode & operator=(const QuadTreeNode & Source)
@@ -89,13 +93,13 @@ QuadTreeNode & QuadTreeNode::operator=(const QuadTreeNode & Source)
 		m_quad = Source.m_quad;
 		m_stream = Source.m_stream;
 		m_minimumQuadSize = Source.m_minimumQuadSize;
+		m_room = Source.m_room;
 
 		for (int i = 0; i < 4; i++)
 			if (Source.m_children[i] != nullptr)
 			{
 				if (m_children[i] != nullptr)
 					delete m_children[i];
-
 				m_children[i] = new QuadTreeNode(*Source.m_children[i]);
 			}
 	}
@@ -219,13 +223,14 @@ QuadSlices QuadTreeNode::Slice(int PlannedDivisions)
 **********************************************************************************************************/
 QuadTreeNode ** QuadTreeNode::GetChildren()
 {
+	//TODO: This should be const like all other getters.
 	return m_children;
 }
 /**********************************************************************************************************
 *	Quad GetQuad()
 *		Purpose:	Getter.
 **********************************************************************************************************/
-Quad QuadTreeNode::GetQuad()
+Quad QuadTreeNode::GetQuad() const
 {
 	return m_quad;
 }
@@ -233,7 +238,7 @@ Quad QuadTreeNode::GetQuad()
 *	Quad * GetRoom()
 *		Purpose:	Getter.
 **********************************************************************************************************/
-Quad * QuadTreeNode::GetRoom()
+Quad * QuadTreeNode::GetRoom() const
 {
 	return m_room;
 }
@@ -249,7 +254,7 @@ void QuadTreeNode::SetRoom(Quad * Room)
 *		FVector GetMinimumQuadSize()
 *		Purpose:	Getter.
 **********************************************************************************************************/
-FVector QuadTreeNode::GetMinimumQuadSize()
+FVector QuadTreeNode::GetMinimumQuadSize() const
 {
 	return m_minimumQuadSize;
 }
@@ -265,7 +270,7 @@ void QuadTreeNode::SetMinimumQuadSize(FVector MinimumRoomSize)
 *	FRandomStream GetRandomStream()
 *		Purpose:	Getter.
 **********************************************************************************************************/
-FRandomStream QuadTreeNode::GetRandomStream()
+FRandomStream QuadTreeNode::GetRandomStream() const
 {
 	return m_stream;
 }
