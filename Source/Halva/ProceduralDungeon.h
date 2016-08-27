@@ -18,8 +18,11 @@
 *			will be laid out in such a way that rooms and paths will be generated. Each room will be
 *			accessible from any other room.
 *
-*	Manager Functions:
-*		?
+*	UE4 Functions:
+*		AProceduralDungeon()
+*			Constructor.
+*		OnConstruction()
+*			Creates the dungeon each time a parameter is changed, the object is loaded or spawned.
 *
 *	Mutators:
 *
@@ -86,6 +89,8 @@ public:
 	
 	// Called every frame
 	virtual void Tick( float DeltaSeconds ) override;
+
+	virtual void OnConstruction(const FTransform & Transform) override;
 
 	void GenerateTiles();
 

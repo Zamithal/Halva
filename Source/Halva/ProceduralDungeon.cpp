@@ -12,7 +12,7 @@ AProceduralDungeon::AProceduralDungeon()
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
-	m_randomStream = FRandomStream(randomSeed);
+	RootComponent = NewObject<USceneComponent>();
 }
 
 // Called when the game starts or when spawned
@@ -28,7 +28,12 @@ void AProceduralDungeon::Tick( float DeltaTime )
 	Super::Tick( DeltaTime );
 
 }
+void AProceduralDungeon::OnConstruction(const FTransform & Transform)
+{
+	m_randomStream = FRandomStream(randomSeed);
 
+	GenerateTiles();
+}
 /**********************************************************************************************************
 *	void GenerateTiles()
 *		Purpose:	Creates a dungeon layout and places a tile at each location in the layout. The tile
@@ -64,40 +69,48 @@ void AProceduralDungeon::InitializeTileArrays()
 	// UE4 Does not allow nested containers to interact with blueprints.
 	// This step restructures the layout of data so that it is not blueprint accessible but much more 
 	// usable. To find a tile of a specific type use tileMeshes[TileType][i].
+
 	for (int i = 0; i < NUMBER_OF_TILE_TYPES; i++)
+	{
+		for (int j = 0; j < tileMeshes[i].Num(); j++)
+		{
+			tileMeshes[i][j]->ClearInstances();
+		}
+
 		tileMeshes[i].Empty();
+	}
 
 	// Set the size of each.
-	tileMeshes[emptyTile].SetNum(emptyTileTypes.Num(), false);
-	tileMeshes[floorTile].SetNum(floorTileTypes.Num(), false);
-	tileMeshes[wallTile].SetNum(wallTileTypes.Num(), false);
-	tileMeshes[outsideCornerTile].SetNum(outsideCornerTileTypes.Num(), false);
-	tileMeshes[insideCornerTile].SetNum(insideCornerTileTypes.Num(), false);
+	tileMeshes[emptyTile].SetNum(emptyTileTypes.Num());
+	tileMeshes[floorTile].SetNum(floorTileTypes.Num());
+	tileMeshes[wallTile].SetNum(wallTileTypes.Num());
+	tileMeshes[outsideCornerTile].SetNum(outsideCornerTileTypes.Num());
+	tileMeshes[insideCornerTile].SetNum(insideCornerTileTypes.Num());
 
 	// Initialize their static mesh's with no instances.
 	for (int i = 0; i < tileMeshes[emptyTile].Num(); i++)
 	{
-		tileMeshes[emptyTile][i] = NewObject<UInstancedStaticMeshComponent>();
+		tileMeshes[emptyTile][i] = NewObject<UInstancedStaticMeshComponent>(this);
 		tileMeshes[emptyTile][i]->SetStaticMesh(emptyTileTypes[i]);
 	}
 	for (int i = 0; i < tileMeshes[floorTile].Num(); i++)
 	{
-		tileMeshes[floorTile][i] = NewObject<UInstancedStaticMeshComponent>();
+		tileMeshes[floorTile][i] = NewObject<UInstancedStaticMeshComponent>(this);
 		tileMeshes[floorTile][i]->SetStaticMesh(floorTileTypes[i]);
 	}
 	for (int i = 0; i < tileMeshes[wallTile].Num(); i++)
 	{
-		tileMeshes[wallTile][i] = NewObject<UInstancedStaticMeshComponent>();
+		tileMeshes[wallTile][i] = NewObject<UInstancedStaticMeshComponent>(this);
 		tileMeshes[wallTile][i]->SetStaticMesh(wallTileTypes[i]);
 	}
 	for (int i = 0; i < tileMeshes[outsideCornerTile].Num(); i++)
 	{
-		tileMeshes[outsideCornerTile][i] = NewObject<UInstancedStaticMeshComponent>();
+		tileMeshes[outsideCornerTile][i] = NewObject<UInstancedStaticMeshComponent>(this);
 		tileMeshes[outsideCornerTile][i]->SetStaticMesh(outsideCornerTileTypes[i]);
 	}
 	for (int i = 0; i < tileMeshes[insideCornerTile].Num(); i++)
 	{
-		tileMeshes[insideCornerTile][i] = NewObject<UInstancedStaticMeshComponent>();
+		tileMeshes[insideCornerTile][i] = NewObject<UInstancedStaticMeshComponent>(this);
 		tileMeshes[insideCornerTile][i]->SetStaticMesh(insideCornerTileTypes[i]);
 	}
 
@@ -106,7 +119,9 @@ void AProceduralDungeon::InitializeTileArrays()
 	{
 		for (int j = 0; j < tileMeshes[i].Num(); j++)
 		{
-			tileMeshes[i][j]->AttachTo(GetRootComponent());
+			tileMeshes[i][j]->ClearInstances();
+			tileMeshes[i][j]->AttachToComponent(GetRootComponent(), FAttachmentTransformRules::KeepRelativeTransform);
+			tileMeshes[i][j]->RegisterComponent();
 		}
 	}
 
@@ -148,7 +163,9 @@ void AProceduralDungeon::CreateTileMeshes()
 						// Pick a random tile.
 						int randomIndex = m_randomStream.RandRange(0, tileMeshes[i].Num() - 1);
 
-						tileMeshes[i][randomIndex]->AddInstance(tileTransform);
+						// Add a instance
+						if (tileMeshes[i][randomIndex]->StaticMesh != nullptr)
+							tileMeshes[i][randomIndex]->AddInstance(tileTransform);
 					}
 				}
 			}
