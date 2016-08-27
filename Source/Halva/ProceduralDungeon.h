@@ -1,8 +1,9 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 #pragma once
-
+#include "DungeonLayout.h"
 #include "GameFramework/Actor.h"
 #include "ProceduralDungeon.generated.h"
+
 /**********************************************************************************************************
 *	Class: ProceduralDungeon
 *
@@ -35,32 +36,42 @@
 *			there is one for each tile type specified.
 *		
 *	Data Members:
-*		int RandomSeed - The random seed to generate a dungeon with.
-*		FVector dungeonSize - The total number of tiles in each direction. 100x100 is 100 tiles across each.
-*		FVector smallestRoomSize - The smallest number of tiles a room can be in each direction.
-*		int desiredRooms - The number of rooms to attempt to make.
-*		int pathWidth - The width of paths connecting rooms.
-*		FVector tileDimensions - How big each tile is in unreal units. Affects spacing of each tile.
-*		TArray<class UStaticMesh *> EmptyTiles - An array containing a list of all the types of tiles that
-*												 could be used when an empty tile is required.
-*		TArray<class UStaticMesh *> floorTiles - An array containing a list of all the types of tiles that
-*												 could be used when an floor tile is required.
-*		TArray<class UStaticMesh *> wallTiles - An array containing a list of all the types of tiles that
-*												 could be used when an wall tile is required.
-*		TArray<class UStaticMesh *> outsideCornerTiles - An array containing a list of all the types of 
-*														 tiles that could be used when an outside corner
-*														 tile is required.
-*		TArray<class UStaticMesh *> insideCornerTiles - An array containing a list of all the types
-*														of tiles that could be used when an inside corner
-*														tile is required.
-*		TArray<UInstancedStaticMeshComponent *> emptyTiles - Container for actual mesh.
-*		TArray<UInstancedStaticMeshComponent *> floorTiles - Container for actual mesh.
-*		TArray<UInstancedStaticMeshComponent *> wallTiles - Container for actual mesh.
-*		TArray<UInstancedStaticMeshComponent *> outsideCornerTiles - Container for actual mesh.
-*		TArray<UInstancedStaticMeshComponent *> insideCornerTiles - Container for actual mesh.
-*		FRandomStream m_randomStream - Allows levels to be randomized but consistent through a seed.
-*		DungeonLayout m_dungeonLayout - Contains the layout information for the dungeon.
+*		int RandomSeed
+*			The random seed to generate a dungeon with.
+*		FVector dungeonSize
+*			The total number of tiles in each direction. 100x100 is 100 tiles across each.
+*		FVector smallestRoomSize
+*			The smallest number of tiles a room can be in each direction.
+*		int desiredRooms
+*			The number of rooms to attempt to make.
+*		int pathWidth
+*			The width of paths connecting rooms.
+*		FVector tileDimensions
+*			How big each tile is in unreal units. Affects spacing of each tile.
+*		TArray<class UStaticMesh *> EmptyTiles
+*			An array containing a list of all the types of tiles that could be used when an empty tile is 
+*			required.
+*		TArray<class UStaticMesh *> floorTiles
+*			An array containing a list of all the types of tiles that could be used when an floor tile is
+*			required.
+*		TArray<class UStaticMesh *> wallTiles
+*			An array containing a list of all the types of tiles that could be used when an wall tile is
+*			required.
+*		TArray<class UStaticMesh *> outsideCornerTiles
+*			An array containing a list of all the types of tiles that could be used when an outside corner 
+*			tile is required.
+*		TArray<class UStaticMesh *> insideCornerTiles
+*			An array containing a list of all the types of tiles that could be used when an inside corner
+*			tile is required.
+*		int const NUMBER_OF_TILE_TYPES
+*			The number of different tile types there are.
+*		TArray<UInstancedStaticMeshComponent *> tileMeshes[]
+*			Contains an TArray for each type of tile. to find any given tile use tileMesh[TileType][x].
+*		DungeonLayout m_dungeonLayout
+*			Contains the layout information for the dungeon.
 **********************************************************************************************************/
+int const NUMBER_OF_TILE_TYPES = 5;
+
 UCLASS()
 class HALVA_API AProceduralDungeon : public AActor
 {
@@ -108,20 +119,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tiles")
 		TArray<class UStaticMesh *> outsideCornerTileTypes;
 
-	UPROPERTY(BlueprintReadOnly, Category = "Tiles")
-		TArray<UInstancedStaticMeshComponent *> emptyTiles;
-
-	UPROPERTY(BlueprintReadOnly, Category = "Tiles")
-		TArray<UInstancedStaticMeshComponent *> floorTiles;
-
-	UPROPERTY(BlueprintReadOnly, Category = "Tiles")
-		TArray<UInstancedStaticMeshComponent *> wallTiles;
-
-	UPROPERTY(BlueprintReadOnly, Category = "Tiles")
-		TArray<UInstancedStaticMeshComponent *> outsideCornerTiles;
-
-	UPROPERTY(BlueprintReadOnly, Category = "Tiles")
-		TArray<UInstancedStaticMeshComponent *> insideCornerTiles;
+	TArray<UInstancedStaticMeshComponent *> tileMeshes[NUMBER_OF_TILE_TYPES];
 
 private:
 

@@ -2,7 +2,6 @@
 
 #include "Halva.h"
 #include "ProceduralDungeon.h"
-#include "DungeonLayout.h"
 
 /**********************************************************************************************************
 *	DungeonLayout()
@@ -14,14 +13,13 @@ AProceduralDungeon::AProceduralDungeon()
 	PrimaryActorTick.bCanEverTick = true;
 
 	m_randomStream = FRandomStream(randomSeed);
-
-	GenerateTiles();
 }
 
 // Called when the game starts or when spawned
 void AProceduralDungeon::BeginPlay()
 {
 	Super::BeginPlay();
+	GenerateTiles();
 }
 
 // Called every frame
@@ -40,86 +38,121 @@ void AProceduralDungeon::Tick( float DeltaTime )
 *					tile meshes, no mesh is picked.
 *
 *		Changes:
-*			emptyTiles - Static meshes instances will be created if possible.
-*			floorTiles - Static meshes instances will be created if possible.
-*			wallTiles - Static meshes instances will be created if possible.
-*			outsideCornerTiles - Static meshes instances will be created if possible.
-*			insideCornerTiles - Static meshes instances will be created if possible.
+*				Assuming that there is at least one tile type for each given tile, a static mesh instance
+*				will be added for each tile on the map. The tile will be a random choice between all tiles
+*				of the specified tile type.
 **********************************************************************************************************/
 void AProceduralDungeon::GenerateTiles()
 {
 	InitializeTileArrays();
 
 	m_dungeonLayout = DungeonLayout(dungeonSize, smallestRoomSize, desiredRooms, pathWidth, m_randomStream);
+
+	CreateTileMeshes();
 }
 /**********************************************************************************************************
 *	void InitializeTileArrays()
 *		Purpose:	Clears the tile arrays and initializes them for tile data.
 *
 *		Changes:
-*			emptyTiles - Will be cleared and set to the static mesh at it's parallel array.
-*			floorTiles - Will be cleared and set to the static mesh at it's parallel array.
-*			wallTiles - Will be cleared and set to the static mesh at it's parallel array.
-*			outsideCornerTiles - Will be cleared and set to the static mesh at it's parallel array.
-*			insideCornerTiles - Will be cleared and set to the static mesh at it's parallel array.
+*			m_tileMeshes
+*				Each type of tile will get an initialized static mesh instance with no
+*				instances.
 **********************************************************************************************************/
 void AProceduralDungeon::InitializeTileArrays()
 {
 	// UE4 Does not allow nested containers to interact with blueprints.
-	// Because of this parallel arrays will be used instead of nested arrays.
-	emptyTiles.Empty();
-	floorTiles.Empty();
-	wallTiles.Empty();
-	outsideCornerTiles.Empty();
-	insideCornerTiles.Empty();
+	// This step restructures the layout of data so that it is not blueprint accessible but much more 
+	// usable. To find a tile of a specific type use tileMeshes[TileType][i].
+	for (int i = 0; i < NUMBER_OF_TILE_TYPES; i++)
+		tileMeshes[i].Empty();
 
 	// Set the size of each.
-	emptyTiles.SetNum(emptyTileTypes.Num(), false);
-	floorTiles.SetNum(floorTileTypes.Num(), false);
-	wallTiles.SetNum(wallTileTypes.Num(), false);
-	outsideCornerTiles.SetNum(outsideCornerTileTypes.Num(), false);
-	insideCornerTiles.SetNum(insideCornerTileTypes.Num(), false);
+	tileMeshes[emptyTile].SetNum(emptyTileTypes.Num(), false);
+	tileMeshes[floorTile].SetNum(floorTileTypes.Num(), false);
+	tileMeshes[wallTile].SetNum(wallTileTypes.Num(), false);
+	tileMeshes[outsideCornerTile].SetNum(outsideCornerTileTypes.Num(), false);
+	tileMeshes[insideCornerTile].SetNum(insideCornerTileTypes.Num(), false);
 
 	// Initialize their static mesh's with no instances.
-	for (int i = 0; i < emptyTiles.Num(); i++)
+	for (int i = 0; i < tileMeshes[emptyTile].Num(); i++)
 	{
-		emptyTiles[i] = NewObject<UInstancedStaticMeshComponent>();
-		emptyTiles[i]->SetStaticMesh(emptyTileTypes[i]);
+		tileMeshes[emptyTile][i] = NewObject<UInstancedStaticMeshComponent>();
+		tileMeshes[emptyTile][i]->SetStaticMesh(emptyTileTypes[i]);
 	}
-	for (int i = 0; i < floorTiles.Num(); i++)
+	for (int i = 0; i < tileMeshes[floorTile].Num(); i++)
 	{
-		floorTiles[i] = NewObject<UInstancedStaticMeshComponent>();
-		floorTiles[i]->SetStaticMesh(floorTileTypes[i]);
+		tileMeshes[floorTile][i] = NewObject<UInstancedStaticMeshComponent>();
+		tileMeshes[floorTile][i]->SetStaticMesh(floorTileTypes[i]);
 	}
-	for (int i = 0; i < wallTiles.Num(); i++)
+	for (int i = 0; i < tileMeshes[wallTile].Num(); i++)
 	{
-		wallTiles[i] = NewObject<UInstancedStaticMeshComponent>();
-		wallTiles[i]->SetStaticMesh(wallTileTypes[i]);
+		tileMeshes[wallTile][i] = NewObject<UInstancedStaticMeshComponent>();
+		tileMeshes[wallTile][i]->SetStaticMesh(wallTileTypes[i]);
 	}
-	for (int i = 0; i < outsideCornerTiles.Num(); i++)
+	for (int i = 0; i < tileMeshes[outsideCornerTile].Num(); i++)
 	{
-		outsideCornerTiles[i] = NewObject<UInstancedStaticMeshComponent>();
-		outsideCornerTiles[i]->SetStaticMesh(outsideCornerTileTypes[i]);
+		tileMeshes[outsideCornerTile][i] = NewObject<UInstancedStaticMeshComponent>();
+		tileMeshes[outsideCornerTile][i]->SetStaticMesh(outsideCornerTileTypes[i]);
 	}
-	for (int i = 0; i < insideCornerTiles.Num(); i++)
+	for (int i = 0; i < tileMeshes[insideCornerTile].Num(); i++)
 	{
-		insideCornerTiles[i] = NewObject<UInstancedStaticMeshComponent>();
-		insideCornerTiles[i]->SetStaticMesh(insideCornerTileTypes[i]);
+		tileMeshes[insideCornerTile][i] = NewObject<UInstancedStaticMeshComponent>();
+		tileMeshes[insideCornerTile][i]->SetStaticMesh(insideCornerTileTypes[i]);
+	}
+
+	// attach each to the root component.
+	for (int i = 0; i < NUMBER_OF_TILE_TYPES; i++)
+	{
+		for (int j = 0; j < tileMeshes[i].Num(); j++)
+		{
+			tileMeshes[i][j]->AttachTo(GetRootComponent());
+		}
 	}
 
 }
 /**********************************************************************************************************
 *	void CreateTileMeshes()
-*		Purpose:	Constructs the meshes for the tiles. The location and rotation of each tile is
-*					determined by the dungeonLayout.
+*		Purpose:	Constructs the meshes for the tiles. Iterates through the entire dungeon layout once
+*					for each tile type there is. If a tile is found that should match the type of tile,
+*					a random one is picked from the tile types and a mesh is generated.
 *
 *		Changes:
-*			emptyTiles - Tiles will be added.
-*			floorTiles - Tiles will be added.
-*			wallTiles - Tiles will be added.
-*			outsideCornerTiles - Tiles will be added.
-*			insideCornerTiles - Tiles will be added.
+*			m_tileMeshes
+*				Assuming that there is at least one tile type for each given tile, a static mesh instance
+*				will be added for each tile on the map. The tile will be a random choice between all tiles
+*				of the specified tile type.
 **********************************************************************************************************/
 void AProceduralDungeon::CreateTileMeshes()
 {
+	FVector dungeonDimensions = m_dungeonLayout.GetDungeonDimensions();
+	TileData ** layout = m_dungeonLayout.GetDungeonLayout();
+
+	for (int i = 0; i < NUMBER_OF_TILE_TYPES; i++)
+	{
+		if (tileMeshes[i].Num() > 0)
+		{
+			for (int y = 0; y < dungeonDimensions.Y; y++)
+			{
+				for (int x = 0; x < dungeonDimensions.X; x++)
+				{
+					// If the tile at that location is the type of this pass.
+					if (layout[y][x].tileType == i)
+					{
+						// Create translation.
+						FVector tileLocation = FVector(tileDimensions.X * x, tileDimensions.Y * y, 0);
+
+						// Create Transform
+						FTransform tileTransform = FTransform(layout[y][x].tileRotation, tileLocation, FVector(1, 1, 1));
+
+						// Pick a random tile.
+						int randomIndex = m_randomStream.RandRange(0, tileMeshes[i].Num() - 1);
+
+						tileMeshes[i][randomIndex]->AddInstance(tileTransform);
+					}
+				}
+			}
+
+		}
+	}
 }
