@@ -88,7 +88,7 @@ bool Quad::operator==(const Quad & rhs) const
 	if (m_position != rhs.GetPosition())
 		equal = false;
 
-	if (m_bounds != rhs.GetPosition())
+	if (m_bounds != rhs.GetBounds())
 		equal = false;
 
 	return equal;

@@ -521,23 +521,19 @@ void DungeonLayout::GenerateRoomRecursive(QuadTreeNode * CurrentNode)
 		QuadTreeNode ** children = CurrentNode->GetChildren();
 
 		// should never be nullptr but check anyway.
-		if (children != nullptr)
+		if (children != nullptr && children[0] != nullptr)
 		{
-			// If the first child is set they all are, call this on each child.
-			if (children[0] != nullptr)
-			{
-				for (int i = 0; i < 4; i++)
-					GenerateRoomRecursive(children[i]);
-			}
-			// else this is a leaf node, create a random room for it.
-			else
-			{
-				// Add the room to the list of rooms.
-				int tArrayIndex = m_rooms.Add(GenerateRandomRoom(CurrentNode->GetQuad()));
+			for (int i = 0; i < 4; i++)
+				GenerateRoomRecursive(children[i]);
+		}
+		// else this is a leaf node, create a random room for it.
+		else
+		{
+			// Add the room to the list of rooms.
+			int tArrayIndex = m_rooms.Add(GenerateRandomRoom(CurrentNode->GetQuad()));
 
-				// Set this node's room to point at the newly created room.
-				CurrentNode->SetRoom(&m_rooms[tArrayIndex]);
-			}
+			// Set this node's room to point at the newly created room.
+			CurrentNode->SetRoom(&m_rooms[tArrayIndex]);
 		}
 	}
 
@@ -618,7 +614,7 @@ bool DungeonLayout::DropRandomRoomRecursive(QuadTreeNode * CurrentNode)
 		if (children != nullptr && children[0] != nullptr)
 		{
 			int failedTries = 0;
-			int failedChildren[4];
+			int failedChildren[4] = { -1, -1, -1, -1 };
 
 			bool removedARoom = false;
 			bool childHasFailed = false;
@@ -627,7 +623,7 @@ bool DungeonLayout::DropRandomRoomRecursive(QuadTreeNode * CurrentNode)
 			// While there are still children that have not failed.
 			while (removedARoom == false && failedTries < 4)
 			{
-				randomChild = m_randomStream.RandRange(0, 4);
+				randomChild = m_randomStream.RandRange(0, 3);
 				childHasFailed = false;
 
 				// make sure the random child has not already been tried.
@@ -968,25 +964,23 @@ bool DungeonLayout::GenerateXAlignedPath(Quad Room1, Quad Room2)
 bool DungeonLayout::GenerateLBendPath(Quad Room1, Quad Room2)
 {
 	int randomBendDirection = m_randomStream.RandRange(0, 1);
+
+	// Casting to bool not allowed.
+	bool randomBool = false;
+
+	if (randomBendDirection)
+		randomBool = true;
+
+
 	bool succeeded = false;
 
-	// Try to build a bend one way.
-	if (randomBendDirection == 1)
-		succeeded = GenerateLBendPathWithKnownOrientation(Room1, Room2, true);
-	else
-		succeeded = GenerateLBendPathWithKnownOrientation(Room1, Room2, false);
+
+
+	succeeded = GenerateLBendPathWithKnownOrientation(Room1, Room2, randomBool);
 
 	// If the bend could not be completed try it the other way.
 	if (!succeeded)
-	{
-		randomBendDirection++;
-		randomBendDirection %= 2;
-
-		if (randomBendDirection == 1)
-			succeeded = GenerateLBendPathWithKnownOrientation(Room1, Room2, true);
-		else
-			succeeded = GenerateLBendPathWithKnownOrientation(Room1, Room2, false);
-	}
+		succeeded = GenerateLBendPathWithKnownOrientation(Room1, Room2, !randomBool);
 
 	// Return if a bend could be built.
 	return succeeded;
@@ -1164,7 +1158,7 @@ bool DungeonLayout::GenerateLBendPathWithKnownOrientation(Quad Room1, Quad Room2
 	bool YGenerated = GenerateYAlignedPath(*yAligned, intersection);
 
 	// If either of those failed, garbage could have been created in the m_paths array. Warn about this.
-	if (XGenerated || YGenerated)
+	if (!(XGenerated && YGenerated))
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Critical Error building path, path array may be corrupted."));
 		return false;
@@ -1194,88 +1188,100 @@ void DungeonLayout::GeneratePathsRecursive(QuadTreeNode * CurrentNode)
 	if (CurrentNode != nullptr)
 	{
 		QuadTreeNode ** children = CurrentNode->GetChildren();
-		if (children != nullptr)
+		
+		// If this node has children
+		if (children != nullptr && children[0] != nullptr)
 		{
-			// If this node has children.
-			if (children[0] != nullptr)
+			// Pick a random number to not generate a path for.
+			int DontBuildPathIndex = m_randomStream.FRandRange(0, 3);
+
+			// Pick a random point on the intersect between each sibling.
+
+			// ORDER:
+			// 0 = Bottom Left
+			// 1 = Top Left
+			// 2 = Top Right
+			// 3 = Bottom Right
+
+			Quad currentChildQuad = Quad();
+			FVector randomPointBetweenQuads = FVector(0, 0, 0);
+			int randomMin = 0;
+			int randomMax = 0;
+
+			// Go through each of the 4 children finding a random point along
+			// the edge that can be connected to each other child.
+			// EG: Since child 0 is the bottom left, find a random point along
+			// its top edge to connect to child 1 (top left quad).
+			for (int i = 0; i < 4; i++)
 			{
-				// Pick a random number to not generate a path for.
-				int DontBuildPathIndex = m_randomStream.FRandRange(0, 4);
-
-				// Pick a random point on the intersect between each sibling.
-
-				// ORDER:
-				// 0 = Bottom Left
-				// 1 = Top Left
-				// 2 = Top Right
-				// 3 = Bottom Right
-
-				Quad currentChildQuad = Quad();
-				FVector randomPointBetweenQuads = FVector();
-				int randomMin = 0;
-				int randomMax = 0;
-
-				// Go through each of the 4 children finding a random point along
-				// the edge that can be connected to each other child.
-				// EG: Since child 0 is the bottom left, find a random point along
-				// its top edge to connect to child 1 (top left quad).
-				for (int i = 0; i < 4; i++)
+				if (i != DontBuildPathIndex)
 				{
-					if (i != DontBuildPathIndex)
-					{
-						currentChildQuad = children[i]->GetQuad();
+					currentChildQuad = children[i]->GetQuad();
 
-						// Switch will result in getting a random point.
-						switch (i)
+					// Switch will result in getting a random point.
+					switch (i)
+					{
+					// 0 = Bottom Left
+					case 0:
+						randomMin = currentChildQuad.GetPosition().X;
+						randomMax = currentChildQuad.GetBounds().X;
+						randomPointBetweenQuads.Y = currentChildQuad.GetBounds().Y;
+						randomPointBetweenQuads.X = m_randomStream.RandRange(randomMin, randomMax);
+						break;
+					// 1 = Top Left
+					case 1:
+						randomMin = currentChildQuad.GetPosition().Y;
+						randomMax = currentChildQuad.GetBounds().Y;
+						randomPointBetweenQuads.X = currentChildQuad.GetBounds().X;
+						randomPointBetweenQuads.Y = m_randomStream.RandRange(randomMin, randomMax);
+						break;
+					// 2 = Top Right
+					case 2:
+						randomMin = currentChildQuad.GetPosition().X;
+						randomMax = currentChildQuad.GetBounds().X;
+						randomPointBetweenQuads.Y = currentChildQuad.GetPosition().Y;
+						randomPointBetweenQuads.X = m_randomStream.RandRange(randomMin, randomMax);
+						break;
+					// 3 = Bottom Right
+					case 3:
+						randomMin = currentChildQuad.GetPosition().Y;
+						randomMax = currentChildQuad.GetBounds().Y;
+						randomPointBetweenQuads.X = currentChildQuad.GetPosition().X;
+						randomPointBetweenQuads.Y = m_randomStream.RandRange(randomMin, randomMax);
+						break;
+					default:
+						break;
+					}
+
+					// Find the closest room belonging to child i.
+					Quad * room1 = FindClosestRoom(children[i], randomPointBetweenQuads);
+					Quad * room2 = nullptr;
+
+					// If there are no rooms to connect to, give up.
+					if (room1 != nullptr)
+					{
+						// This for loop allows the connection of diagonal rooms if there isn't
+						// a room at child[i+1].
+						for (int j = 0; room2 == nullptr && j < 2; j++)
 						{
-						// 0 = Bottom Left
-						case 0:
-							randomMin = currentChildQuad.GetPosition().X;
-							randomMax = currentChildQuad.GetBounds().X;
-							randomPointBetweenQuads.Y = currentChildQuad.GetBounds().Y;
-							randomPointBetweenQuads.X = m_randomStream.RandRange(randomMin, randomMax);
-							break;
-						// 1 = Top Left
-						case 1:
-							randomMin = currentChildQuad.GetPosition().Y;
-							randomMax = currentChildQuad.GetBounds().Y;
-							randomPointBetweenQuads.X = currentChildQuad.GetBounds().X;
-							randomPointBetweenQuads.Y = m_randomStream.RandRange(randomMin, randomMax);
-							break;
-						// 2 = Top Right
-						case 2:
-							randomMin = currentChildQuad.GetPosition().X;
-							randomMax = currentChildQuad.GetBounds().X;
-							randomPointBetweenQuads.Y = currentChildQuad.GetPosition().Y;
-							randomPointBetweenQuads.X = m_randomStream.RandRange(randomMin, randomMax);
-							break;
-						// 3 = Bottom Right
-						case 3:
-							randomMin = currentChildQuad.GetPosition().Y;
-							randomMax = currentChildQuad.GetBounds().Y;
-							randomPointBetweenQuads.X = currentChildQuad.GetPosition().X;
-							randomPointBetweenQuads.Y = m_randomStream.RandRange(randomMin, randomMax);
-							break;
-						default:
-							break;
+							// Find the closest room belonging to the child next to this, or, if that
+							// doesn't exist, the child diagonal from this.
+							room2 = FindClosestRoom(children[(i + j + 1) % 4], randomPointBetweenQuads);
 						}
 
-						// Find the closest room belonging to child i.
-						Quad Room1 = *FindClosestRoom(children[i], randomPointBetweenQuads);
-						// Find the closest room belonging to child i+1.
-						Quad Room2 = *FindClosestRoom(children[(i + 1) % 4], randomPointBetweenQuads);
-
-						GeneratePathBetweenQuads(Room1, Room2);
+						// If 2 rooms were found generate a path between them.
+						if (room2 != nullptr)
+							GeneratePathBetweenQuads(*room1, *room2);
 					}
 				}
-
-				for (int i = 0; i < 4; i++)
-				{
-					// Call this function on each child.
-					GeneratePathsRecursive(children[i]);
-				}
-
 			}
+
+			for (int i = 0; i < 4; i++)
+			{
+				// Call this function on each child.
+				GeneratePathsRecursive(children[i]);
+			}
+
 		}
 	}
 }
@@ -1300,36 +1306,34 @@ Quad * DungeonLayout::FindClosestRoom(QuadTreeNode * ParentNode, FVector Point)
 	if (ParentNode != nullptr)
 	{
 		QuadTreeNode ** children = ParentNode->GetChildren();
-		if (children != nullptr)
+		// If this node has children.
+		if (children != nullptr && children[0] != nullptr)
 		{
-			// If this node has children.
-			if (children[0] != nullptr)
+			Quad * newQuad = nullptr;
+			float newDistance = 0;
+			float oldDistance = 0;
+
+			for (int i = 0; i < 4; i++)
 			{
-				Quad * newQuad = nullptr;
-				float newDistance = 0;
-				float oldDistance = 0;
+				newQuad = FindClosestRoom(children[i], Point);
 
-				for (int i = 0; i < 4; i++)
+				if (newQuad != nullptr)
+					newDistance = (FindCenterOfClosestEdge(*newQuad, Point) - Point).Size();
+
+				if (closestQuad != nullptr && newQuad != nullptr)
 				{
-					newQuad = FindClosestRoom(children[i], Point);
+					oldDistance = (FindCenterOfClosestEdge(*closestQuad, Point) - Point).Size();
 
-					if (newQuad != nullptr)
-						newDistance = (FindCenterOfClosestEdge(*newQuad, Point) - Point).Size();
-
-					if (closestQuad != nullptr && newQuad != nullptr)
-					{
-						oldDistance = (FindCenterOfClosestEdge(*closestQuad, Point) - Point).Size();
-
-						if (newDistance < oldDistance)
-							newQuad = closestQuad;
-					}
-					else if (closestQuad == nullptr)
-						closestQuad = newQuad;
+					if (newDistance < oldDistance)
+						newQuad = closestQuad;
 				}
+				else if (closestQuad == nullptr)
+					closestQuad = newQuad;
 			}
-			else
-				closestQuad = ParentNode->GetRoom();
+
 		}
+		else
+			closestQuad = ParentNode->GetRoom();
 	}
 
 	return closestQuad;
