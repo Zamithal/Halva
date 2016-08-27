@@ -160,7 +160,7 @@ bool QuadTreeNode::CreateChildren(int Depth)
 		QuadSlices childQuads = Slice(Depth);
 
 		for (int i = 0; i < 4; i++)
-			if (m_children[i] == nullptr)
+			if (m_children[i] != nullptr)
 				delete m_children[i];
 
 		m_children[0] = new QuadTreeNode(Depth - 1, childQuads.southWest, m_minimumQuadSize, m_stream);
@@ -206,6 +206,13 @@ QuadSlices QuadTreeNode::Slice(int PlannedDivisions)
 		int xSlice = m_stream.RandRange(minX, maxX);
 		int ySlice = m_stream.RandRange(minY, maxY);
 
+		// Wait until the rooms are somewhat similar sized.
+		while ((float)xSlice / (float)ySlice > 2 || (float)xSlice / (float)ySlice < .5)
+		{
+			xSlice = m_stream.RandRange(minX, maxX);
+			ySlice = m_stream.RandRange(minY, maxY);
+		}
+
 		// Bottom left quad.
 		slicedUp.southWest.SetPosition(quadOffset);
 		slicedUp.southWest.SetBounds(FVector(xSlice, ySlice, 0));
@@ -215,8 +222,8 @@ QuadSlices QuadTreeNode::Slice(int PlannedDivisions)
 		slicedUp.southEast.SetBounds(FVector(quadBounds.X - xSlice, ySlice, 0));
 
 		// Top left quad.
-		slicedUp.southWest.SetPosition(FVector(quadOffset.X, quadOffset.Y + ySlice, 0));
-		slicedUp.southWest.SetBounds(FVector(xSlice, quadBounds.Y - ySlice, 0));
+		slicedUp.northWest.SetPosition(FVector(quadOffset.X, quadOffset.Y + ySlice, 0));
+		slicedUp.northWest.SetBounds(FVector(xSlice, quadBounds.Y - ySlice, 0));
 
 		// Top right quad.
 		slicedUp.northEast.SetPosition(FVector(quadOffset.X + xSlice, quadOffset.Y + ySlice, 0));

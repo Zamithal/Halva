@@ -73,11 +73,7 @@ void AProceduralDungeon::InitializeTileArrays()
 	for (int i = 0; i < NUMBER_OF_TILE_TYPES; i++)
 	{
 		for (int j = 0; j < tileMeshes[i].Num(); j++)
-		{
 			tileMeshes[i][j]->ClearInstances();
-		}
-
-		tileMeshes[i].Empty();
 	}
 
 	// Set the size of each.
@@ -90,27 +86,32 @@ void AProceduralDungeon::InitializeTileArrays()
 	// Initialize their static mesh's with no instances.
 	for (int i = 0; i < tileMeshes[emptyTile].Num(); i++)
 	{
-		tileMeshes[emptyTile][i] = NewObject<UInstancedStaticMeshComponent>(this);
+		if (tileMeshes[emptyTile][i] == nullptr)
+			tileMeshes[emptyTile][i] = NewObject<UInstancedStaticMeshComponent>(this);
 		tileMeshes[emptyTile][i]->SetStaticMesh(emptyTileTypes[i]);
 	}
 	for (int i = 0; i < tileMeshes[floorTile].Num(); i++)
 	{
-		tileMeshes[floorTile][i] = NewObject<UInstancedStaticMeshComponent>(this);
+		if (tileMeshes[floorTile][i] == nullptr)
+			tileMeshes[floorTile][i] = NewObject<UInstancedStaticMeshComponent>(this);
 		tileMeshes[floorTile][i]->SetStaticMesh(floorTileTypes[i]);
 	}
 	for (int i = 0; i < tileMeshes[wallTile].Num(); i++)
 	{
-		tileMeshes[wallTile][i] = NewObject<UInstancedStaticMeshComponent>(this);
+		if (tileMeshes[wallTile][i] == nullptr)
+			tileMeshes[wallTile][i] = NewObject<UInstancedStaticMeshComponent>(this);
 		tileMeshes[wallTile][i]->SetStaticMesh(wallTileTypes[i]);
 	}
 	for (int i = 0; i < tileMeshes[outsideCornerTile].Num(); i++)
 	{
-		tileMeshes[outsideCornerTile][i] = NewObject<UInstancedStaticMeshComponent>(this);
+		if (tileMeshes[outsideCornerTile][i] == nullptr)
+			tileMeshes[outsideCornerTile][i] = NewObject<UInstancedStaticMeshComponent>(this);
 		tileMeshes[outsideCornerTile][i]->SetStaticMesh(outsideCornerTileTypes[i]);
 	}
 	for (int i = 0; i < tileMeshes[insideCornerTile].Num(); i++)
 	{
-		tileMeshes[insideCornerTile][i] = NewObject<UInstancedStaticMeshComponent>(this);
+		if (tileMeshes[insideCornerTile][i] == nullptr)
+			tileMeshes[insideCornerTile][i] = NewObject<UInstancedStaticMeshComponent>(this);
 		tileMeshes[insideCornerTile][i]->SetStaticMesh(insideCornerTileTypes[i]);
 	}
 
@@ -119,7 +120,6 @@ void AProceduralDungeon::InitializeTileArrays()
 	{
 		for (int j = 0; j < tileMeshes[i].Num(); j++)
 		{
-			tileMeshes[i][j]->ClearInstances();
 			tileMeshes[i][j]->AttachToComponent(GetRootComponent(), FAttachmentTransformRules::KeepRelativeTransform);
 			tileMeshes[i][j]->RegisterComponent();
 		}
