@@ -195,11 +195,11 @@ QuadSlices QuadTreeNode::Slice(int PlannedDivisions)
 
 	// define the minimum and maximum slice locations.
 	// 1 is subtracted because this is a division.
-	int minX = (int)m_minimumQuadSize.X * pow(2, PlannedDivisions - 1);
-	int minY = (int)m_minimumQuadSize.Y * pow(2, PlannedDivisions - 1);
+	int minX = m_minimumQuadSize.X * pow(2, PlannedDivisions - 1);
+	int minY = m_minimumQuadSize.Y * pow(2, PlannedDivisions - 1);
 
-	int maxX = ((int)quadBounds.X - (int)m_minimumQuadSize.X) * pow(2, PlannedDivisions - 1);
-	int maxY = ((int)quadBounds.Y - (int)m_minimumQuadSize.Y) * pow(2, PlannedDivisions - 1);
+	int maxX = quadBounds.X - m_minimumQuadSize.X * pow(2, PlannedDivisions - 1);
+	int maxY = quadBounds.Y - m_minimumQuadSize.Y * pow(2, PlannedDivisions - 1);
 
 	if (maxX >= minX && maxY >= minY)
 	{
@@ -218,16 +218,16 @@ QuadSlices QuadTreeNode::Slice(int PlannedDivisions)
 		slicedUp.southWest.SetBounds(FVector(xSlice, ySlice, 0));
 
 		// Bottom right quad.
-		slicedUp.southEast.SetPosition(FVector(xSlice + quadOffset.X, quadOffset.Y, 0));
-		slicedUp.southEast.SetBounds(FVector(quadBounds.X - xSlice, ySlice, 0));
+		slicedUp.southEast.SetPosition(FVector(xSlice, quadOffset.Y, 0));
+		slicedUp.southEast.SetBounds(FVector(quadBounds.X, ySlice, 0));
 
 		// Top left quad.
-		slicedUp.northWest.SetPosition(FVector(quadOffset.X, quadOffset.Y + ySlice, 0));
-		slicedUp.northWest.SetBounds(FVector(xSlice, quadBounds.Y - ySlice, 0));
+		slicedUp.northWest.SetPosition(FVector(quadOffset.X, ySlice, 0));
+		slicedUp.northWest.SetBounds(FVector(xSlice, quadBounds.Y, 0));
 
 		// Top right quad.
-		slicedUp.northEast.SetPosition(FVector(quadOffset.X + xSlice, quadOffset.Y + ySlice, 0));
-		slicedUp.northEast.SetBounds(FVector(quadBounds.X - xSlice, quadBounds.Y - ySlice, 0));
+		slicedUp.northEast.SetPosition(FVector(xSlice, ySlice, 0));
+		slicedUp.northEast.SetBounds(FVector(quadBounds.X, quadBounds.Y, 0));
 	}
 
 	return slicedUp;
