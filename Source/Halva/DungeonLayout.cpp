@@ -12,7 +12,6 @@
 **********************************************************************************************************/
 DungeonLayout::DungeonLayout()
 {
-	m_rooms = TArray<Quad>();
 	m_paths = TArray<Quad>();
 	m_minimumRoomSize = FVector(0, 0, 0);
 	m_dungeonDimensions = FVector(0, 0, 0);
@@ -50,7 +49,6 @@ DungeonLayout::DungeonLayout(FVector DungeonSize, FVector MinimumRoomSize, int D
 
 	m_quadTreeRoot = QuadTreeNode(Depth, DungeonBounds, MinimumRoomSize, RNG);
 
-	m_rooms = TArray<Quad>();
 	m_paths = TArray<Quad>();
 
 	m_targetNumRooms = DesiredRooms;
@@ -95,7 +93,6 @@ DungeonLayout::DungeonLayout(FVector DungeonSize, FVector MinimumRoomSize, int D
 **********************************************************************************************************/
 DungeonLayout::DungeonLayout(const DungeonLayout & Source)
 {
-	m_rooms = Source.m_rooms;
 	m_paths = Source.m_paths;
 	m_pathWidth = Source.m_pathWidth;
 	m_dungeonDimensions = Source.m_dungeonDimensions;
@@ -161,7 +158,20 @@ DungeonLayout & DungeonLayout::operator=(const DungeonLayout & Source)
 {
 	if (&Source != this)
 	{
-		m_rooms = Source.m_rooms;
+		// Gets the dimensions of the old level.
+		FVector levelDimensions(m_quadTreeRoot.GetQuad().GetBounds());
+
+		if (m_dungeonLayout != nullptr)
+		{
+			for (int i = 0; i < levelDimensions.Y; i++)
+			{
+				delete[] m_dungeonLayout[i];
+				m_dungeonLayout[i] = nullptr;
+			}
+			delete[] m_dungeonLayout;
+			m_dungeonLayout = nullptr;
+		}
+
 		m_paths = Source.m_paths;
 		m_pathWidth = Source.m_pathWidth;
 		m_dungeonDimensions = Source.m_dungeonDimensions;
@@ -171,34 +181,20 @@ DungeonLayout & DungeonLayout::operator=(const DungeonLayout & Source)
 		m_quadTreeRoot = Source.m_quadTreeRoot;
 
 		// Gets the dimensions of the level.
-		FVector levelDimensions(m_quadTreeRoot.GetQuad().GetBounds());
+		levelDimensions = FVector(m_quadTreeRoot.GetQuad().GetBounds());
 
-		// Throw out any decimal the user might have entered.
-		int xTileNumber = (int)floor(levelDimensions.X);
-		int yTileNumber = (int)floor(levelDimensions.Y);
 
-		if (m_dungeonLayout != nullptr)
+		if (levelDimensions.Y > 0 && levelDimensions.X > 0)
 		{
-			for (int i = 0; i < yTileNumber; i++)
-			{
-				delete[] m_dungeonLayout[i];
-				m_dungeonLayout[i] = nullptr;
-			}
-			delete[] m_dungeonLayout;
-			m_dungeonLayout = nullptr;
-		}
-
-		if (yTileNumber > 0 && xTileNumber > 0)
-		{
-			m_dungeonLayout = new TileData *[yTileNumber];
+			m_dungeonLayout = new TileData *[levelDimensions.Y];
 
 			// create a Tile Data array for each element of the TileData pointer array.
-			for (int i = 0; i < yTileNumber; i++)
-				m_dungeonLayout[i] = new TileData[xTileNumber];
+			for (int i = 0; i < levelDimensions.Y; i++)
+				m_dungeonLayout[i] = new TileData[levelDimensions.X];
 
 			// copy the values over.
-			for (int y = 0; y < yTileNumber; y++)
-				for (int x = 0; x < xTileNumber; x++)
+			for (int y = 0; y < levelDimensions.Y; y++)
+				for (int x = 0; x < levelDimensions.X; x++)
 					m_dungeonLayout[y][x] = Source.m_dungeonLayout[y][x];
 		}
 
@@ -235,9 +231,7 @@ void DungeonLayout::SetDungeonDimensions(FVector DungeonDimensions)
 	// Clear m_dungeonLayout.
 	if (m_dungeonLayout != nullptr)
 	{
-		int rows = m_dungeonDimensions.Y;
-
-		for (int i = 0; i < rows; i++)
+		for (int i = 0; i < m_dungeonDimensions.Y; i++)
 		{
 			if (m_dungeonLayout[i] != nullptr)
 				delete[] m_dungeonLayout[i];
@@ -294,6 +288,29 @@ void DungeonLayout::SetPathWidth(int PathWidth)
 	m_pathWidth = PathWidth;
 }
 /**********************************************************************************************************
+*	int CountRooms()
+*		Purpose:	Counts the rooms in the dungeon.
+*
+*		Return:
+*			The number of rooms in the dungeon.
+**********************************************************************************************************/
+int DungeonLayout::CountRooms()
+{
+	return CountRoomsRecursive(&m_quadTreeRoot);
+}
+/**********************************************************************************************************
+*	int GetListOfAllRooms()
+*		Purpose:	Gets a list of every room in the dungeon. This is returned by value and modifications
+*					to this list do not affect the dungeon.
+*
+*		Return:
+*			A TArray of Quads containing every room in the dungeon.
+**********************************************************************************************************/
+TArray<Quad> DungeonLayout::GetListOfAllRooms()
+{
+	return GetListOfAllRoomsRecursive(&m_quadTreeRoot);
+}
+/**********************************************************************************************************
 *	void GenerateDungeonLayout()
 *		Purpose:	Generates a complete dungeon from start to finish. The finished result will be stored
 *					in the 2D array m_dungeonLayout. If a layout already exists, it will be replaced with
@@ -327,7 +344,6 @@ void DungeonLayout::GenerateDungeonLayout()
 **********************************************************************************************************/
 void DungeonLayout::GenerateRooms()
 {
-	m_rooms.Empty();
 	GenerateRoomRecursive(&m_quadTreeRoot);
 }
 /**********************************************************************************************************
@@ -341,8 +357,13 @@ void DungeonLayout::GenerateRooms()
 **********************************************************************************************************/
 void DungeonLayout::DropRooms()
 {
-	while (m_rooms.Num() > m_targetNumRooms)
+	int roomCount = CountRooms();
+
+	while (roomCount > m_targetNumRooms)
+	{
 		DropRandomRoomRecursive(&m_quadTreeRoot);
+		roomCount--;
+	}
 }
 /**********************************************************************************************************
 *	void GenerateRooms()
@@ -373,20 +394,15 @@ void DungeonLayout::CreateRoomLayout()
 {
 	ClearDungeonLayout();
 
-	int roomCount = m_rooms.Num();
+	int roomCount = CountRooms();
 	
-	// Mark all tiles inside rooms as floor tiles.
-	for (int i = 0; i < roomCount; i++)
-	{
-		CreateFloorQuad(m_rooms[i]);
-	}
+	TArray<Quad> listOfRooms = GetListOfAllRooms();
 
-	int pathCount = m_paths.Num();
+	for (int i = 0; i < listOfRooms.Num(); i++)
+		CreateFloorQuad(listOfRooms[i]);
 
-	for (int i = 0; i < pathCount; i++)
-	{
+	for (int i = 0; i < m_paths.Num(); i++)
 		CreateFloorQuad(m_paths[i]);
-	}
 }
 /**********************************************************************************************************
 *	void CreateSpecialTiles
@@ -529,11 +545,8 @@ void DungeonLayout::GenerateRoomRecursive(QuadTreeNode * CurrentNode)
 		// else this is a leaf node, create a random room for it.
 		else
 		{
-			// Add the room to the list of rooms.
-			int tArrayIndex = m_rooms.Add(GenerateRandomRoom(CurrentNode->GetQuad()));
-
-			// Set this node's room to point at the newly created room.
-			CurrentNode->SetRoom(&m_rooms[tArrayIndex]);
+			// Create a random room and store it in this node.
+			CurrentNode->SetRoom(GenerateRandomRoom(CurrentNode->GetQuad()));
 		}
 	}
 
@@ -650,27 +663,8 @@ bool DungeonLayout::DropRandomRoomRecursive(QuadTreeNode * CurrentNode)
 		// This is a leaf node.
 		else
 		{
-			Quad * roomToRemove = CurrentNode->GetRoom();
-
-			// This room can be deleted.
-			if (roomToRemove != nullptr)
-			{
-				int itemsRemoved = m_rooms.RemoveSingle(*roomToRemove);
-
-				// If this room couldn't be found things are very bad.
-				if (itemsRemoved > 0)
-				{
-					CurrentNode->SetRoom(nullptr);
-					return true;
-				}
-				else
-				{
-					// Critical situation, quad tree does not match room array.
-					UE_LOG(LogTemp, Warning,
-						TEXT("Critical error removing room: Quad tree does not agree with room list."));
-				}
-
-			}
+			CurrentNode->SetRoom(Quad());
+			return true;
 		}
 	}
 
@@ -1254,15 +1248,15 @@ void DungeonLayout::GeneratePathsRecursive(QuadTreeNode * CurrentNode)
 					}
 
 					// Find the closest room belonging to child i.
-					Quad * room1 = FindClosestRoom(children[i], randomPointBetweenQuads);
-					Quad * room2 = nullptr;
+					Quad room1 = FindClosestRoom(children[i], randomPointBetweenQuads);
+					Quad room2 = Quad();
 
 					// If there are no rooms to connect to, give up.
-					if (room1 != nullptr)
+					if (room1.GetBounds() != FVector(0, 0, 0))
 					{
 						// This for loop allows the connection of diagonal rooms if there isn't
 						// a room at child[i+1].
-						for (int j = 0; room2 == nullptr && j < 2; j++)
+						for (int j = 0; room2.GetBounds() == FVector(0, 0, 0) && j < 2; j++)
 						{
 							// Find the closest room belonging to the child next to this, or, if that
 							// doesn't exist, the child diagonal from this.
@@ -1270,8 +1264,8 @@ void DungeonLayout::GeneratePathsRecursive(QuadTreeNode * CurrentNode)
 						}
 
 						// If 2 rooms were found generate a path between them.
-						if (room2 != nullptr)
-							GeneratePathBetweenQuads(*room1, *room2);
+						if (room2.GetBounds() != FVector(0, 0, 0))
+							GeneratePathBetweenQuads(room1, room2);
 					}
 				}
 			}
@@ -1286,7 +1280,7 @@ void DungeonLayout::GeneratePathsRecursive(QuadTreeNode * CurrentNode)
 	}
 }
 /**********************************************************************************************************
-*	Quad * FindClosestRoom(QuadTreeNode * ParentNode, FVector Point)
+*	Quad FindClosestRoom(QuadTreeNode * ParentNode, FVector Point)
 *		Purpose:	Searches the tree passed in at parent node for the room that is closest to the point
 *					passed in. The distance to the point is calculated at the center of each edge. This
 *					is to ensure that room size does not affect distance to the point.
@@ -1299,9 +1293,9 @@ void DungeonLayout::GeneratePathsRecursive(QuadTreeNode * CurrentNode)
 *
 *		Return: Returns the room that is the closest to the point given.
 **********************************************************************************************************/
-Quad * DungeonLayout::FindClosestRoom(QuadTreeNode * ParentNode, FVector Point)
+Quad DungeonLayout::FindClosestRoom(QuadTreeNode * ParentNode, FVector Point)
 {
-	Quad * closestQuad = nullptr;
+	Quad closestRoom = Quad();
 
 	if (ParentNode != nullptr)
 	{
@@ -1309,34 +1303,36 @@ Quad * DungeonLayout::FindClosestRoom(QuadTreeNode * ParentNode, FVector Point)
 		// If this node has children.
 		if (children != nullptr && children[0] != nullptr)
 		{
-			Quad * newQuad = nullptr;
+			Quad newClosestRoom = Quad();
 			float newDistance = 0;
 			float oldDistance = 0;
 
 			for (int i = 0; i < 4; i++)
 			{
-				newQuad = FindClosestRoom(children[i], Point);
+				newClosestRoom = FindClosestRoom(children[i], Point);
+				
+				// If the newClosestRoom has an area.
+				if (newClosestRoom.GetBounds() != FVector(0, 0, 0))
+					newDistance = (FindCenterOfClosestEdge(newClosestRoom, Point) - Point).Size();
 
-				if (newQuad != nullptr)
-					newDistance = (FindCenterOfClosestEdge(*newQuad, Point) - Point).Size();
-
-				if (closestQuad != nullptr && newQuad != nullptr)
+				// If there is an old closest room and a new closest room compare the values.
+				if (closestRoom.GetBounds() != FVector(0, 0, 0) && newClosestRoom.GetBounds() != FVector(0, 0, 0))
 				{
-					oldDistance = (FindCenterOfClosestEdge(*closestQuad, Point) - Point).Size();
+					oldDistance = (FindCenterOfClosestEdge(closestRoom, Point) - Point).Size();
 
 					if (newDistance < oldDistance)
-						newQuad = closestQuad;
+						newClosestRoom = closestRoom;
 				}
-				else if (closestQuad == nullptr)
-					closestQuad = newQuad;
+				else if (closestRoom.GetBounds() == FVector(0, 0, 0))
+					closestRoom = newClosestRoom;
 			}
 
 		}
 		else
-			closestQuad = ParentNode->GetRoom();
+			closestRoom = ParentNode->GetRoom();
 	}
 
-	return closestQuad;
+	return closestRoom;
 }
 /**********************************************************************************************************
 *	FVector FindCenterOfClosestEdge(Quad Room, FVector Point)
@@ -1749,4 +1745,79 @@ bool DungeonLayout::SolveInsideCornerTile(int XPosition, int YPosition)
 	}
 
 	return false;
+}
+/**********************************************************************************************************
+*	int CountRoomsRecursive(QuadTreeNode * CurrentNode)
+*		Purpose:	Counts all the rooms below this in the tree. This includes the current node.
+*
+*		Parameters:
+*			QuadTreeNode * CurrentNode
+*				The highest node in the tree to search.
+*
+*		Return:
+*			Returns the number of rooms found.
+**********************************************************************************************************/
+int DungeonLayout::CountRoomsRecursive(QuadTreeNode * CurrentNode)
+{
+	int roomSum = 0;
+
+	if (CurrentNode != nullptr)
+	{
+		QuadTreeNode ** children = CurrentNode->GetChildren();
+
+		// If this node has children
+		if (children != nullptr && children[0] != nullptr)
+		{
+			for (int i = 0; i < 4; i++)
+			{
+				roomSum += CountRoomsRecursive(children[i]);
+			}
+		}
+		else
+		{
+			if (CurrentNode->GetRoom().GetBounds() != FVector(0, 0, 0))
+				roomSum++;
+		}
+	}
+
+	return roomSum;
+}
+/**********************************************************************************************************
+*	TArray<Quad> GetListOfAllRoomsRecursive(QuadTreeNode * CurrentNode)
+*		Purpose:	Gets a list of all rooms below this in the tree. This includes this node.
+*
+*		Parameters:
+*			QuadTreeNode * CurrentNode
+*				The highest node in the tree to search.
+*
+*		Return:
+*			Returns a list of every room found.
+**********************************************************************************************************/
+TArray<Quad> DungeonLayout::GetListOfAllRoomsRecursive(QuadTreeNode * CurrentNode)
+{
+	TArray<Quad> allRooms = TArray<Quad>();
+
+	if (CurrentNode != nullptr)
+	{
+		QuadTreeNode ** children = CurrentNode->GetChildren();
+
+		// If this node has children
+		if (children != nullptr && children[0] != nullptr)
+		{
+			for (int i = 0; i < 4; i++)
+			{
+				TArray<Quad> childRooms = GetListOfAllRoomsRecursive(children[i]);
+
+				for (int j = 0; j < childRooms.Num(); j++)
+					allRooms.Add(childRooms[j]);
+			}
+		}
+		else
+		{
+			if (CurrentNode->GetRoom().GetBounds() != FVector(0, 0, 0))
+				allRooms.Add(CurrentNode->GetRoom());
+		}
+	}
+
+	return allRooms;
 }

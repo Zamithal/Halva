@@ -35,8 +35,10 @@
 *
 *	Data Members:
 *
-*		FVector m_bounds - The extents of the quad.
-*		FVector m_position - The position of the quad.
+*		FVector m_bounds
+*			The extents of the quad.
+*		FVector m_position
+*			The position of the quad.
 **********************************************************************************************************/
 class HALVA_API Quad
 {

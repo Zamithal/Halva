@@ -62,12 +62,16 @@ struct QuadSlices
 *			
 *	Data Members:
 *
-*		QuadTreeNode * m_children[4] - Array of quads this quad is split up into.
-*		Quad m_quad - The space that makes up this quad.
-*		Quad * m_room - The room belonging to this node. This will only be ever set in leaf nodes and is
-*						not set by the node.
-*		FVector m_minimumQuadSize - The smallest leaf node Quad that can be generated.	
-*		FRandomStream m_stream - The random stream used to generate randomness.
+*		QuadTreeNode * m_children[4]
+*			Array of quads this quad is split up into.
+*		Quad m_quad
+*			The space that makes up this quad.
+*		Quad m_room
+*			The room contained in this node. Only applicable at leaf nodes.
+*		FVector m_minimumQuadSize
+*			The smallest leaf node Quad that can be generated.	
+*		FRandomStream m_stream
+*			The random stream used to generate randomness.
 **********************************************************************************************************/
 class HALVA_API QuadTreeNode
 {
@@ -81,8 +85,8 @@ public:
 
 	QuadTreeNode ** GetChildren();
 	Quad GetQuad() const;
-	Quad * GetRoom() const;
-	void SetRoom(Quad * Room);
+	Quad GetRoom() const;
+	void SetRoom(Quad Room);
 	FVector GetMinimumQuadSize() const;
 	void SetMinimumQuadSize(FVector MinimumRoomSize);
 	FRandomStream GetRandomStream() const;
@@ -95,7 +99,7 @@ private:
 
 	QuadTreeNode * m_children[4];
 	Quad m_quad;
-	Quad * m_room;
+	Quad m_room;
 	FVector m_minimumQuadSize;
 	FRandomStream m_stream;
 };

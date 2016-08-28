@@ -32,7 +32,7 @@
 *			-Get
 *		DungeonDimensions
 *			-Get
-*			-Set+
+*			-Set
 *		MinimumRoomSize
 *			-Get
 *			-Set
@@ -66,6 +66,10 @@
 *		void Generate InsideCorners()
 *			Replaces walls with inside corners where they are needed. These are at the corners of every
 *			room.
+*		int CountRooms()
+*			Counts all rooms in the dungeon.
+*		TArray<Quad> GetListOfAllRooms()
+*			Returns a list of each room in the dungeon.
 *		void GenerateRoomRecursive(QuadTreeNode * CurrentNode)
 *			Finds all the children below this node and creates a random room for them. The room is then
 *			added to m_rooms.
@@ -90,7 +94,7 @@
 *		void GeneratePathsRecursive(QuadTreeNode * CurrentNode)
 *			Walks down the tree connecting all siblings it finds along the way. The siblings will have at
 *			most a single connection but are guaranteed to be at least indirectly connected.
-*		Quad * FindClosestRoom(QuadTreeNode * ParentNode, FVector Point)
+*		Quad FindClosestRoom(QuadTreeNode * ParentNode, FVector Point)
 *			Finds the room that is closest to the point given in the tree. The distance is calculated at
 *			the edge of the room.
 *		FVector FindCenterOfClosestEdge(Quad Room, FVector Point)
@@ -110,22 +114,34 @@
 *		bool SolveInsideCornerTile(int XPosition, int YPosition)
 *			Checks if the tile at the given position should be an inside corner. If so, replaces that tile
 *			with an inside corner.
+*		int CountRoomsRecursive(QuadTreeRoot * CurrentNode)
+*			Counts all rooms below this in the tree including this node.
+*		TArray<Quad> GetListOfAllRoomsRecursive(QuadTreeRoot * CurrentNode)
+*			returns a list of all rooms below this node in the tree including this node.
 *
 *	Data Members:
 *
-*		QuadTreeNode m_quadTreeRoot - The root of the quad tree.
-*		TArray<Quad> m_rooms - A list of all the rooms in the dungeon.
-*		TArray<Quad> m_paths - A list of all the paths in the dungeon.
-*		int m_targetNumberRooms - The number of rooms to create on generation. If this number is too large
-*								  instead the maximum number of rooms will be given instead dependent on
-*								  level size and minimum room size.
-*		TileData ** m_dungeonLayout - Holds all the information needed to pick a tile in each element. This
-*									  will be an array of arrays but will be used as a simple 2D array.
-*		FVector m_dungeonDimensions - The maximum dimensions of the dungeon. This is how many tiles across
-*									  the level will be once generated.
-*		FVector m_minimumRoomSize - The smallest room that can be generated in the level.
-*		int m_pathWidth - The width of all paths between rooms or other paths.
-*		FRandomStream m_randomStream - Stream for generating random numbers.
+*		QuadTreeNode m_quadTreeRoot
+*			The root of the quad tree.
+*		TArray<Quad> m_paths
+*			A list of all the paths in the dungeon.
+*		int m_roomCount
+*			The number of rooms contained in this dungeon.
+*		int m_targetNumberRooms
+*			The number of rooms to create on generation. If this number is too large instead the maximum
+*			number of rooms will be given instead dependent on level size and minimum room size.
+*		TileData ** m_dungeonLayout
+*			Holds all the information needed to pick a tile in each element. This will be an array of 
+*			arrays but will be used as a simple 2D array.
+*		FVector m_dungeonDimensions
+*			The maximum dimensions of the dungeon. This is how many tiles across the level will be once
+*			generated.
+*		FVector m_minimumRoomSize
+*			The smallest room that can be generated in the level.
+*		int m_pathWidth
+*			The width of all paths between rooms or other paths.
+*		FRandomStream m_randomStream 
+*			Stream for generating random numbers.
 **********************************************************************************************************/
 class HALVA_API DungeonLayout
 {
@@ -147,6 +163,9 @@ public:
 	void SetMinimumRoomSize(FVector MinimumRoomSize);
 	int GetPathWidth();
 	void SetPathWidth(int PathWidth);
+
+	int CountRooms();
+	TArray<Quad> GetListOfAllRooms();
 
 	//  Dungeon Generation
 	void GenerateDungeonLayout();
@@ -174,17 +193,17 @@ private:
 	bool GenerateLBendPath(Quad Room1, Quad Room2);
 	bool GenerateLBendPathWithKnownOrientation(Quad Room1, Quad Room2, bool xFirst);
 	void GeneratePathsRecursive(QuadTreeNode * CurrentNode);
-	Quad * FindClosestRoom(QuadTreeNode * ParentNode, FVector Point);
+	Quad FindClosestRoom(QuadTreeNode * ParentNode, FVector Point);
 	FVector FindCenterOfClosestEdge(Quad Room, FVector Point);
 	void ClearDungeonLayout();
 	void CreateFloorQuad(Quad Room);
 	bool SolveWallTile(int XPosition, int YPosition);
 	bool SolveOutsideCornerTile(int XPosition, int YPosition);
 	bool SolveInsideCornerTile(int XPosition, int YPosition);
-
+	int CountRoomsRecursive(QuadTreeNode * CurrentNode);
+	TArray<Quad> GetListOfAllRoomsRecursive(QuadTreeNode * CurrentNode);
 	// member variables
 	QuadTreeNode m_quadTreeRoot;
-	TArray<Quad> m_rooms;
 	TArray<Quad> m_paths;
 	int m_targetNumRooms;
 	TileData ** m_dungeonLayout;

@@ -11,7 +11,7 @@ QuadTreeNode::QuadTreeNode()
 	m_quad = Quad(FVector(0, 0, 0), FVector(0, 0, 0));
 	m_stream = FRandomStream(0);
 	m_minimumQuadSize = FVector(0, 0, 0);
-	m_room = nullptr;
+	m_room = Quad();
 
 	for (int i = 0; i < 4; i++)
 		m_children[i] = nullptr;
@@ -36,7 +36,7 @@ QuadTreeNode::QuadTreeNode(int Depth, Quad Bounds, FVector MinimumQuadSize, FRan
 	m_quad = Bounds;
 	m_minimumQuadSize = MinimumQuadSize;
 	m_stream = Stream;
-	m_room = nullptr;
+	m_room = Quad();
 
 	bool childrenMade = false;
 	
@@ -250,18 +250,18 @@ Quad QuadTreeNode::GetQuad() const
 	return m_quad;
 }
 /**********************************************************************************************************
-*	Quad * GetRoom()
+*	Quad GetRoom()
 *		Purpose:	Getter.
 **********************************************************************************************************/
-Quad * QuadTreeNode::GetRoom() const
+Quad QuadTreeNode::GetRoom() const
 {
 	return m_room;
 }
 /**********************************************************************************************************
-*	void SetRoom(Quad * Room)
+*	void SetRoom(Quad Room)
 *		Purpose:	Setter.
 **********************************************************************************************************/
-void QuadTreeNode::SetRoom(Quad * Room)
+void QuadTreeNode::SetRoom(Quad Room)
 {
 	m_room = Room;
 }
