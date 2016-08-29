@@ -1,5 +1,6 @@
 *.blend filter=lfs diff=lfs merge=lfs -text
 *.png filter=lfs diff=lfs merge=lfs -text
 *.fbx filter=lfs diff=lfs merge=lfs -text
-Content/_Textures/ filter=lfs diff=lfs merge=lfs -text
-Content/_Meshes/ filter=lfs diff=lfs merge=lfs -text
+Assets/ filter=lfs diff=lfs merge=lfs -text
+*/_Meshes/* filter=lfs diff=lfs merge=lfs -text
+*/_Textures/* filter=lfs diff=lfs merge=lfs -text
