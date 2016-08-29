@@ -1476,8 +1476,8 @@ bool DungeonLayout::SolveWallTile(int XPosition, int YPosition)
 	bool inBounds = true;
 	inBounds = inBounds && XPosition >= 0;
 	inBounds = inBounds && YPosition >= 0;
-	inBounds = inBounds && XPosition <= m_dungeonDimensions.X;
-	inBounds = inBounds && YPosition <= m_dungeonDimensions.Y;
+	inBounds = inBounds && XPosition < m_dungeonDimensions.X;
+	inBounds = inBounds && YPosition < m_dungeonDimensions.Y;
 
 	if (!inBounds)
 		return false;
@@ -1491,18 +1491,20 @@ bool DungeonLayout::SolveWallTile(int XPosition, int YPosition)
 	newWall.tileType = wallTile;
 
 	// Get surrounding tile data.
-	for (int y = -1; y < 1; y++)
+	for (int y = -1; y <= 1; y++)
 	{
-		for (int x = -1; x < 1; x++)
+		for (int x = -1; x <= 1; x++)
 		{
 			// XOR - get tiles adjacent to the center.
 			if ((x != 0) != (y != 0))
 			{
+				// Make sure the adjacent tile is inside the map.
 				inBounds = true;
 				inBounds = inBounds && x + XPosition >= 0;
 				inBounds = inBounds && y + YPosition >= 0;
-				inBounds = inBounds && x + XPosition <= m_dungeonDimensions.X;
-				inBounds = inBounds && y + YPosition <= m_dungeonDimensions.Y;
+				// These are not <= because this is an array starting at 0.
+				inBounds = inBounds && x + XPosition < m_dungeonDimensions.X;
+				inBounds = inBounds && y + YPosition < m_dungeonDimensions.Y;
 
 				// Make sure we don't check for a value outside the bounds of the array.
 				if (inBounds)
@@ -1513,9 +1515,9 @@ bool DungeonLayout::SolveWallTile(int XPosition, int YPosition)
 					{
 						// Set the tile rotation to face away from the empty tile.
 						if (x == 0)
-							newWall.tileRotation = FRotator(0, 0, (y + 1) * 90 + 90);
+							newWall.tileRotation = FRotator(0, (y + 1) * 90 + 90, 0);
 						else
-							newWall.tileRotation = FRotator(0, 0, (x + 1) * 90);
+							newWall.tileRotation = FRotator(0, (x + 1) * 90, 0);
 
 						// Set the tile in the dungeon layout.
 						m_dungeonLayout[YPosition][XPosition] = newWall;
@@ -1526,9 +1528,9 @@ bool DungeonLayout::SolveWallTile(int XPosition, int YPosition)
 				{
 					// Set the tile rotation to face away from the empty tile.
 					if (x == 0)
-						newWall.tileRotation = FRotator(0, 0, (y + 1) * 90 + 90);
+						newWall.tileRotation = FRotator(0, (y + 1) * 90 + 90, 0);
 					else
-						newWall.tileRotation = FRotator(0, 0, (x + 1) * 90);
+						newWall.tileRotation = FRotator(0, (x + 1) * 90, 0);
 
 					// Set the tile in the dungeon layout.
 					m_dungeonLayout[YPosition][XPosition] = newWall;
@@ -1563,47 +1565,79 @@ bool DungeonLayout::SolveOutsideCornerTile(int XPosition, int YPosition)
 	if (m_dungeonLayout == nullptr)
 		return false;
 
-	// Make sure the tile is a valid location in the map. An outside corner cannot be on the edge of the
-	// map and generate correctly.
+	// Make sure the tile is a valid location in the map.
 	bool inBounds = true;
-	inBounds = inBounds && XPosition > 0;
-	inBounds = inBounds && YPosition > 0;
+	inBounds = inBounds && XPosition >= 0;
+	inBounds = inBounds && YPosition >= 0;
 	inBounds = inBounds && XPosition < m_dungeonDimensions.X;
 	inBounds = inBounds && YPosition < m_dungeonDimensions.Y;
+
 
 	if (!inBounds)
 		return false;
 
 	int floorTileCount = 0;
 	int wallTileCount = 0;
+	int emptyCount = 0;
 
 	FVector floorTiles[2];
 
 	// Count and store the locations of  wall and floor tiles around this tile.
-	for (int y = -1; y < 1; y++)
+	for (int y = -1; y <= 1; y++)
 	{
-		for (int x = -1; x < 1; x++)
+		for (int x = -1; x <= 1; x++)
 		{
 			// XOR - get tiles adjacent to the center.
 			if ((x != 0) != (y != 0))
 			{
-				TileData adjacentTile = m_dungeonLayout[y + YPosition][x + XPosition];
+				// Make sure the adjacent tile is inside the map.
+				inBounds = true;
+				inBounds = inBounds && x + XPosition >= 0;
+				inBounds = inBounds && y + YPosition >= 0;
+				// These are not <= because this is an array starting at 0.
+				inBounds = inBounds && x + XPosition < m_dungeonDimensions.X;
+				inBounds = inBounds && y + YPosition < m_dungeonDimensions.Y;
 
-				if (adjacentTile.tileType == floorTile)
+				if (inBounds)
 				{
-					if (floorTileCount < 2)
-						floorTiles[floorTileCount] = FVector(x, y, 0);
-					floorTileCount++;
+					TileData adjacentTile = m_dungeonLayout[y + YPosition][x + XPosition];
+
+					if (adjacentTile.tileType == floorTile)
+					{
+						if (floorTileCount < 2)
+							floorTiles[floorTileCount] = FVector(x, y, 0);
+						floorTileCount++;
+					}
+					else if (adjacentTile.tileType == wallTile)
+					{
+						wallTileCount++;
+					}
 				}
-				else if (adjacentTile.tileType == wallTile)
+			}
+			// At least one empty needs to be diagonal to the tile.
+			// NOT XOR - get tiles not adjacent to the center.
+			if (!((x != 0) != (y != 0)))
+			{
+				// Make sure the adjacent tile is inside the map.
+				inBounds = true;
+				inBounds = inBounds && x + XPosition >= 0;
+				inBounds = inBounds && y + YPosition >= 0;
+				// These are not <= because this is an array starting at 0.
+				inBounds = inBounds && x + XPosition < m_dungeonDimensions.X;
+				inBounds = inBounds && y + YPosition < m_dungeonDimensions.Y;
+
+				if (inBounds)
 				{
-					wallTileCount++;
+					TileData adjacentTile = m_dungeonLayout[y + YPosition][x + XPosition];
+
+					if (adjacentTile.tileType == emptyTile)
+						emptyCount++;
 				}
 			}
 		}
 	}
 
-	if (floorTileCount == 2 && wallTileCount == 2)
+	if (floorTileCount == 2 && wallTileCount == 2 && emptyCount >= 1)
 	{
 		
 
@@ -1665,8 +1699,8 @@ bool DungeonLayout::SolveInsideCornerTile(int XPosition, int YPosition)
 	bool inBounds = true;
 	inBounds = inBounds && XPosition >= 0;
 	inBounds = inBounds && YPosition >= 0;
-	inBounds = inBounds && XPosition <= m_dungeonDimensions.X;
-	inBounds = inBounds && YPosition <= m_dungeonDimensions.Y;
+	inBounds = inBounds && XPosition < m_dungeonDimensions.X;
+	inBounds = inBounds && YPosition < m_dungeonDimensions.Y;
 
 	if (!inBounds)
 		return false;
@@ -1677,9 +1711,9 @@ bool DungeonLayout::SolveInsideCornerTile(int XPosition, int YPosition)
 	FVector wallTiles[2];
 
 	// Count and store the locations of  wall and floor tiles around this tile.
-	for (int y = -1; y < 1; y++)
+	for (int y = -1; y <= 1; y++)
 	{
-		for (int x = -1; x < 1; x++)
+		for (int x = -1; x <= 1; x++)
 		{
 			// XOR - get tiles adjacent to the center.
 			if ((x != 0) != (y != 0))
@@ -1688,8 +1722,8 @@ bool DungeonLayout::SolveInsideCornerTile(int XPosition, int YPosition)
 				inBounds = true;
 				inBounds = inBounds && x + XPosition >= 0;
 				inBounds = inBounds && y + YPosition >= 0;
-				inBounds = inBounds && x + XPosition <= m_dungeonDimensions.X;
-				inBounds = inBounds && y + YPosition <= m_dungeonDimensions.Y;
+				inBounds = inBounds && x + XPosition < m_dungeonDimensions.X;
+				inBounds = inBounds && y + YPosition < m_dungeonDimensions.Y;
 
 				if (inBounds)
 				{
