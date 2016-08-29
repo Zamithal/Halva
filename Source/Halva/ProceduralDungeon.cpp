@@ -12,7 +12,7 @@ AProceduralDungeon::AProceduralDungeon()
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
-	RootComponent = NewObject<USceneComponent>();
+	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("Procedural Dungeon Root"));
 }
 
 // Called when the game starts or when spawned
@@ -87,31 +87,31 @@ void AProceduralDungeon::InitializeTileArrays()
 	for (int i = 0; i < tileMeshes[emptyTile].Num(); i++)
 	{
 		if (tileMeshes[emptyTile][i] == nullptr)
-			tileMeshes[emptyTile][i] = NewObject<UInstancedStaticMeshComponent>(this);
+			tileMeshes[emptyTile][i] = NewObject<UInstancedStaticMeshComponent>(this, TEXT("EmptyTiles_InstancedStaticMesh"));
 		tileMeshes[emptyTile][i]->SetStaticMesh(emptyTileTypes[i]);
 	}
 	for (int i = 0; i < tileMeshes[floorTile].Num(); i++)
 	{
 		if (tileMeshes[floorTile][i] == nullptr)
-			tileMeshes[floorTile][i] = NewObject<UInstancedStaticMeshComponent>(this);
+			tileMeshes[floorTile][i] = NewObject<UInstancedStaticMeshComponent>(this, TEXT("FloorTiles_InstancedStaticMesh"));
 		tileMeshes[floorTile][i]->SetStaticMesh(floorTileTypes[i]);
 	}
 	for (int i = 0; i < tileMeshes[wallTile].Num(); i++)
 	{
 		if (tileMeshes[wallTile][i] == nullptr)
-			tileMeshes[wallTile][i] = NewObject<UInstancedStaticMeshComponent>(this);
+			tileMeshes[wallTile][i] = NewObject<UInstancedStaticMeshComponent>(this, TEXT("WallTiles_InstancedStaticMesh"));
 		tileMeshes[wallTile][i]->SetStaticMesh(wallTileTypes[i]);
 	}
 	for (int i = 0; i < tileMeshes[outsideCornerTile].Num(); i++)
 	{
 		if (tileMeshes[outsideCornerTile][i] == nullptr)
-			tileMeshes[outsideCornerTile][i] = NewObject<UInstancedStaticMeshComponent>(this);
+			tileMeshes[outsideCornerTile][i] = NewObject<UInstancedStaticMeshComponent>(this, TEXT("OutsideCornerTiles_InstancedStaticMesh"));
 		tileMeshes[outsideCornerTile][i]->SetStaticMesh(outsideCornerTileTypes[i]);
 	}
 	for (int i = 0; i < tileMeshes[insideCornerTile].Num(); i++)
 	{
 		if (tileMeshes[insideCornerTile][i] == nullptr)
-			tileMeshes[insideCornerTile][i] = NewObject<UInstancedStaticMeshComponent>(this);
+			tileMeshes[insideCornerTile][i] = NewObject<UInstancedStaticMeshComponent>(this, TEXT("InsideCornerTiles_InstancedStaticMesh"));
 		tileMeshes[insideCornerTile][i]->SetStaticMesh(insideCornerTileTypes[i]);
 	}
 

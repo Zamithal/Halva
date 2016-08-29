@@ -15,3 +15,12 @@ Debug/
 *.opendb
 *.sln
 *.blend1
+*.fbx
+
+# Special Blender file rules.
+# ignore all blend files that are not the final file.
+*.blend
+!*_final.blend
+
+# Special rule for asset concept art.
+assets/**/ConceptArt/
