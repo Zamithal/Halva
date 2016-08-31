@@ -1442,7 +1442,7 @@ void DungeonLayout::CreateFloorQuad(Quad Room)
 				// Pick a random rotation for the floor tile.
 				randomRotation = m_randomStream.RandRange(0, 3);
 				randomRotation *= 90;
-				newFloor.tileRotation.Yaw = randomRotation;
+				//newFloor.tileRotation.Yaw = randomRotation;
 
 				// Assign the tile.
 				m_dungeonLayout[y][x] = newFloor;
