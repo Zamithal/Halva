@@ -1615,8 +1615,7 @@ bool DungeonLayout::SolveOutsideCornerTile(int XPosition, int YPosition)
 				}
 			}
 			// At least one empty needs to be diagonal to the tile.
-			// NOT XOR - get tiles not adjacent to the center.
-			if (!((x != 0) != (y != 0)))
+			else
 			{
 				// Make sure the adjacent tile is inside the map.
 				inBounds = true;
@@ -1656,7 +1655,7 @@ bool DungeonLayout::SolveOutsideCornerTile(int XPosition, int YPosition)
 		if (xSum + ySum == 0)
 		{
 			// 0
-			if (xSum == -1)
+			if (xSum == 1)
 				newCorner.tileRotation.Yaw = 0;
 			else
 				newCorner.tileRotation.Yaw = 180;
@@ -1729,7 +1728,7 @@ bool DungeonLayout::SolveInsideCornerTile(int XPosition, int YPosition)
 				{
 					TileData adjacentTile = m_dungeonLayout[y + YPosition][x + XPosition];
 
-					if (adjacentTile.tileType == wallTile)
+					if (adjacentTile.tileType == wallTile || adjacentTile.tileType == outsideCornerTile)
 					{
 						if (wallCount < 2)
 						{
