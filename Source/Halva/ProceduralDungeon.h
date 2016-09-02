@@ -130,7 +130,7 @@ private:
 
 	void InitializeTileArrays();
 	void CreateTileMeshes();
-
 	FRandomStream m_randomStream;
 	DungeonLayout m_dungeonLayout;
+
 };
