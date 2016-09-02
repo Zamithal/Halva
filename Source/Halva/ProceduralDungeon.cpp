@@ -53,7 +53,6 @@ void AProceduralDungeon::GenerateTiles()
 	m_dungeonLayout = DungeonLayout(dungeonSize, smallestRoomSize, desiredRooms, pathWidth, m_randomStream);
 
 	CreateTileMeshes();
-	CreateTileLightMap();
 }
 /**********************************************************************************************************
 *	void InitializeTileArrays()
