@@ -18,14 +18,6 @@
 *			will be laid out in such a way that rooms and paths will be generated. Each room will be
 *			accessible from any other room.
 *
-*	UE4 Functions:
-*		AProceduralDungeon()
-*			Constructor.
-*		OnConstruction()
-*			Creates the dungeon each time a parameter is changed, the object is loaded or spawned.
-*
-*	Mutators:
-*
 *	Methods:
 *
 *		GenerateTiles()
