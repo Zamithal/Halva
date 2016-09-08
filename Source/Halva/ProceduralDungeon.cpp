@@ -29,6 +29,8 @@ void AProceduralDungeon::Tick( float DeltaTime )
 }
 void AProceduralDungeon::OnConstruction(const FTransform & Transform)
 {
+	Super::OnConstruction(Transform);
+
 	m_randomStream = FRandomStream(randomSeed);
 
 	GenerateTiles();
