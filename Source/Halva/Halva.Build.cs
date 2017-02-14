@@ -6,7 +6,7 @@ public class Halva : ModuleRules
 {
 	public Halva(TargetInfo Target)
 	{
-		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", });
+		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "AIModule" });
 
 		PrivateDependencyModuleNames.AddRange(new string[] {
 			"HeadMountedDisplay", "SteamVR", "SteamVRController",
