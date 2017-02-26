@@ -180,7 +180,7 @@ void AProceduralDungeon::CreateTileMeshes()
 						int randomIndex = m_randomStream.RandRange(0, tileMeshes[i].Num() - 1);
 
 						// Add a instance
-						if (tileMeshes[i][randomIndex]->StaticMesh != nullptr)
+						if (tileMeshes[i][randomIndex]->GetStaticMesh() != nullptr)
 							tileMeshes[i][randomIndex]->AddInstance(tileTransform);
 					}
 				}
