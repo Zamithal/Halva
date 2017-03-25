@@ -51,10 +51,10 @@
 *			Generates a set of paths between rooms and populates m_paths.
 *		void CreateRoomLayout()
 *			Sets the values in the m_dungeonLayout 2d array to match the values in m_rooms and m_paths.
-*			The resulting layout will only be made of walls and empties, run CreateSpecialTiles() to get
-*			other tile types.
-*		void CreateSpecialTiles()
-*			Generates walls, inside corners, outside corners, and pillars in m_dungeonLayout.
+*			The resulting layout will only be made of walls and empties.
+*		void ErodeRoomLayout()
+*			Causes the edges of rooms and paths to be replaced with floors in a random fashion. This
+*			allows rooms generated to look more natural than perfect rectangles if desired.
 *		void CreateWalls()
 *			Generates walls around the rooms and paths in the dungeon layout. This will result in a few
 *			errors that can be fixed by running the remaining create functions.
@@ -63,7 +63,7 @@
 *		void CreateOutsideCorners()
 *			Replaces floors with outside corners where they are needed. These are commonly found where a
 *			path merges with a room.
-*		void Generate InsideCorners()
+*		void CreateInsideCorners()
 *			Replaces walls with inside corners where they are needed. These are at the corners of every
 *			room.
 *		int CountRooms()
@@ -104,6 +104,8 @@
 *		void CreateFloorQuad(Quad Room)
 *			All array elements in the dungeon layout that are contained within Room are changed to floor
 *			tiles.
+*		void CleanUpErosion()
+*			Checks the map for unsolvable floor tiles and replaces them with empties.
 *		bool SolveWallTile(int XPosition, int YPosition)
 *			Determines if the tile at the given position should be a wall tile or not. If it should be,
 *			also determines the rotation it should face. The tile is then assigned the type of wall tile
@@ -142,6 +144,22 @@
 *			The width of all paths between rooms or other paths.
 *		FRandomStream m_randomStream 
 *			Stream for generating random numbers.
+*		int m_erosionPasses
+*			The number of times to attempt to replace edges with floor, making the room appear jagged.
+*		float m_erosionChance
+*			The chance of a wall being replaced with a floor on an erosion pass.
+*		TLinkedList<TileData> m_empties
+*			A list of all empty tiles in the map.
+*		TLinkedList<TileData> m_floors
+*			A list of all floor tiles in the map.
+*		TLinkedList<TileData> m_walls
+*			A list of all wall tiles in the map.
+*		TLinkedList<TileData> m_insideCorners
+*			A list of all insideCorner tiles in the map.
+*		TLinkedList<TileData> m_outsideCorners
+*			A list of all outsideCorner tiles in the map.
+*		TLinkedList<TileData> m_pillars
+*			A list of all pillar tiles in the map.
 **********************************************************************************************************/
 class HALVA_API DungeonLayout
 {
@@ -149,7 +167,7 @@ public:
 
 	// Manager functions
 	DungeonLayout();
-	DungeonLayout(FVector DungeonSize, FVector MinimumRoomSize, int DesiredRooms, int PathWidth, FRandomStream RNG);
+	DungeonLayout(FVector DungeonSize, FVector MinimumRoomSize, int DesiredRooms, int PathWidth, int ErosionPasses, float ErosionChance, FRandomStream RNG);
 	DungeonLayout(const DungeonLayout & source);
 	~DungeonLayout();
 
@@ -177,8 +195,8 @@ private:
 	void DropRooms();
 	void GeneratePaths();
 	void CreateRoomLayout();
-	void CreateSpecialTiles();
 	void CreateWalls();
+	void ErodeRoomLayout();
 	void CreatePillars();
 	void CreateOutsideCorners();
 	void CreateInsideCorners();
@@ -197,11 +215,14 @@ private:
 	FVector FindCenterOfClosestEdge(Quad Room, FVector Point);
 	void ClearDungeonLayout();
 	void CreateFloorQuad(Quad Room);
+	void CleanUpErosion();
 	bool SolveWallTile(int XPosition, int YPosition);
 	bool SolveOutsideCornerTile(int XPosition, int YPosition);
 	bool SolveInsideCornerTile(int XPosition, int YPosition);
 	int CountRoomsRecursive(QuadTreeNode * CurrentNode);
 	TArray<Quad> GetListOfAllRoomsRecursive(QuadTreeNode * CurrentNode);
+
+
 	// member variables
 	QuadTreeNode m_quadTreeRoot;
 	TArray<Quad> m_paths;
@@ -210,5 +231,14 @@ private:
 	FVector m_dungeonDimensions;
 	FVector m_minimumRoomSize;
 	int m_pathWidth;
+	int m_erosionPasses;
+	float m_erosionChance;
 	FRandomStream m_randomStream;
+
+	TArray<TileData> m_empties;
+	TArray<TileData> m_floors;
+	TArray<TileData> m_walls;
+	TArray<TileData> m_insideCorners;
+	TArray<TileData> m_outsideCorners;
+	TArray<TileData> m_pillars;
 };

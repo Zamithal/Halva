@@ -24,4 +24,5 @@ struct TileData
 {
 	TileType tileType;
 	FRotator tileRotation;
+	FVector2D tileLocation;
 };

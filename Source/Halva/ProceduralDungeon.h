@@ -98,6 +98,10 @@ public:
 		int pathWidth;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DungeonLayout")
 		FVector tileDimensions;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DungeonLayout")
+		int erosionPasses;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DungeonLayout")
+		float erosionChance;
 
 	// UE4 Does not allow nested containers to interact with blueprints.
 	// Because of this parallel arrays will be used instead of nested arrays.

@@ -19,10 +19,20 @@ DungeonLayout::DungeonLayout()
 	m_quadTreeRoot = QuadTreeNode(0, Quad(), m_minimumRoomSize, FRandomStream(0));
 	m_pathWidth = 0;
 	m_dungeonLayout = nullptr;
+	m_erosionPasses = 0;
+	m_erosionChance = 0;
 	m_randomStream = FRandomStream(0);
+
+	m_empties;
+	m_floors = TArray<TileData>();
+	m_walls = TArray<TileData>();
+	m_insideCorners = TArray<TileData>();
+	m_outsideCorners = TArray<TileData>();
+	m_pillars = TArray<TileData>();
+
 }
 /**********************************************************************************************************
-*	DungeonLayout(FVector DungeonSize, FVector MinimumRoomSize, int PathWidth)
+*	DungeonLayout(...)
 *		Purpose:	Constructs a dungeon layout. The layout is stored in m_dungeonLayout.
 *
 *		Parameters:
@@ -36,8 +46,12 @@ DungeonLayout::DungeonLayout()
 *				rooms created might be smaller than this but this number will attempt to be reached.
 *			int PathWidth
 *				The width of all paths between rooms.
+*			int ErosionPasses
+*				The number of times to erode walls.
+*			float ErosionChance
+*				The chance a wall is eroded.
 **********************************************************************************************************/
-DungeonLayout::DungeonLayout(FVector DungeonSize, FVector MinimumRoomSize, int DesiredRooms, int PathWidth, FRandomStream RNG)
+DungeonLayout::DungeonLayout(FVector DungeonSize, FVector MinimumRoomSize, int DesiredRooms, int PathWidth, int ErosionPasses, float ErosionChance, FRandomStream RNG)
 {
 	// Get the number of cuts to make. This is log4(DesiredRooms) rounded up.
 	int Depth = 1;
@@ -66,6 +80,9 @@ DungeonLayout::DungeonLayout(FVector DungeonSize, FVector MinimumRoomSize, int D
 
 	m_minimumRoomSize = MinimumRoomSize;
 	m_pathWidth = PathWidth;
+
+	m_erosionPasses = ErosionPasses;
+	m_erosionChance = ErosionChance;
 
 	m_randomStream = RNG;
 
@@ -98,8 +115,18 @@ DungeonLayout::DungeonLayout(const DungeonLayout & Source)
 	m_dungeonDimensions = Source.m_dungeonDimensions;
 	m_minimumRoomSize = Source.m_minimumRoomSize;
 	m_targetNumRooms = Source.m_targetNumRooms;
+	m_erosionPasses = Source.m_erosionPasses;
+	m_erosionChance = Source.m_erosionChance;
 	m_randomStream = Source.m_randomStream;
 	m_quadTreeRoot = Source.m_quadTreeRoot;
+
+	m_empties = Source.m_empties;
+	m_floors = Source.m_floors;
+	m_walls = Source.m_floors;
+	m_insideCorners = Source.m_insideCorners;
+	m_outsideCorners = Source.m_outsideCorners;
+	m_pillars = Source.m_pillars;
+
 
 	// Gets the dimensions of the level.
 	FVector levelDimensions(m_quadTreeRoot.GetQuad().GetBounds());
@@ -177,12 +204,20 @@ DungeonLayout & DungeonLayout::operator=(const DungeonLayout & Source)
 		m_dungeonDimensions = Source.m_dungeonDimensions;
 		m_minimumRoomSize = Source.m_minimumRoomSize;
 		m_targetNumRooms = Source.m_targetNumRooms;
+		m_erosionPasses = Source.m_erosionPasses;
+		m_erosionChance = Source.m_erosionChance;
 		m_randomStream = Source.m_randomStream;
 		m_quadTreeRoot = Source.m_quadTreeRoot;
 
+		m_empties = Source.m_empties;
+		m_floors = Source.m_floors;
+		m_walls = Source.m_walls;
+		m_insideCorners = Source.m_insideCorners;
+		m_outsideCorners = Source.m_outsideCorners;
+		m_pillars = Source.m_pillars;
+
 		// Gets the dimensions of the level.
 		levelDimensions = FVector(m_quadTreeRoot.GetQuad().GetBounds());
-
 
 		if (levelDimensions.Y > 0 && levelDimensions.X > 0)
 		{
@@ -327,11 +362,12 @@ void DungeonLayout::GenerateDungeonLayout()
 	DropRooms();
 	GeneratePaths();
 	CreateRoomLayout();
-	//CreateSpecialTiles();
-	CreateWalls();
+	ErodeRoomLayout();
+	//CreateWalls();
+	// YOU ARE HERE
 	//CreatePillars();
-	CreateOutsideCorners();
-	CreateInsideCorners();
+	//CreateOutsideCorners();
+	//CreateInsideCorners();
 }
 /**********************************************************************************************************
 *	void GenerateRooms()
@@ -403,20 +439,74 @@ void DungeonLayout::CreateRoomLayout()
 
 	for (int i = 0; i < m_paths.Num(); i++)
 		CreateFloorQuad(m_paths[i]);
+
+	//Fill out the empties/floor list.
+	for (int y = 0; y < m_dungeonDimensions.Y; y++)
+	{
+		for (int x = 0; x < m_dungeonDimensions.X; x++)
+		{
+			if (m_dungeonLayout[y][x].tileType == emptyTile)
+				m_empties.Add(m_dungeonLayout[y][x]);
+			else
+				m_floors.Add(m_dungeonLayout[y][x]);
+		}
+	}
 }
 /**********************************************************************************************************
-*	void CreateSpecialTiles
-*		Purpose:	Marks existing floor tiles as special tiles. These tiles have their type changed to
-*					special tiles.
-*
+*	void ErodeRoomLayout()
+*		Purpose:	Causes each empty adjacent to a floor tile to have a chance to be replaced with a
+*					floor tile. The process is then repeated for erosion passes times. This allows semi
+*					random looking rooms to look natural.
 *		Changes:
-*			m_dungeonLayout - Floor tiles can be changed into special tiles.
-*
-*		NOTE: Rules for this function are not yet clear, this function may be removed in the future.
+*			m_dungeonLayout - The values of tiles touching floor tiles have a chance to become floor tiles.
 **********************************************************************************************************/
-void DungeonLayout::CreateSpecialTiles()
+void DungeonLayout::ErodeRoomLayout()
 {
-	//TODO: Define special tiles or remove this function.
+	// If no erosion to be done.
+	if (m_erosionPasses == 0 || m_erosionChance == 0)
+		return;
+
+	// for each pass
+	for (int pass = 0; pass < m_erosionPasses; pass++)
+	{
+		for (int i = 0; i < m_empties.Num(); i++)
+		{
+			int adjacentFloorTiles = 0;
+			int x = m_empties[i].tileLocation.X;
+			int y = m_empties[i].tileLocation.Y;
+
+			// Check adjacent tiles for floor tile count
+			for (int adjY = -1; adjY <= 1; adjY++)
+			{
+				for (int adjX = -1; adjX <= 1; adjX++)
+				{
+					// XOR - get tiles adjacent to the center.
+					if ((adjX != 0) != (adjY != 0))
+					{
+						// range check.
+						if (y + adjY >= 0 && x + adjX >= 0 && y + adjY < m_dungeonDimensions.Y && x + adjX < m_dungeonDimensions.X)
+						{
+							if (m_dungeonLayout[y + adjY][x + adjX].tileType == floorTile)
+								adjacentFloorTiles++;
+						}
+					}
+				}
+			}
+
+			// The more floor tiles the tile is touching, the more likely it is to be
+			// eroded. This will cause a more rounder look.
+			if (m_randomStream.FRand() * 100 < m_erosionChance * adjacentFloorTiles)
+			{
+				m_dungeonLayout[y][x].tileType = floorTile;
+				m_dungeonLayout[y][x].tileRotation = FRotator::ZeroRotator;
+
+				m_floors.Add(m_dungeonLayout[y][x]);
+				m_empties.RemoveAt(i);
+			}
+		}
+	}
+
+	CleanUpErosion();
 }
 /**********************************************************************************************************
 *	void CreateWalls
@@ -434,19 +524,22 @@ void DungeonLayout::CreateWalls()
 {
 	if (m_dungeonLayout != nullptr)
 	{
-		for (int y = 0; y < m_dungeonDimensions.Y; y++)
+		for (int i = 0; i < m_floors.Num(); i++)
 		{
-			for (int x = 0; x < m_dungeonDimensions.X; x++)
+			int x = m_floors[i].tileLocation.X;
+			int y = m_floors[i].tileLocation.Y;
+
+			bool isWall = SolveWallTile(x, y);
+
+			if (isWall)
 			{
-				// If the tile is a floor tile.
-				if (m_dungeonLayout[y][x].tileType == floorTile)
-				{
-					SolveWallTile( x, y );
-				}
+				m_walls.Add(m_dungeonLayout[y][x]);
+				m_floors.RemoveAt(i);
 			}
 		}
 	}
 }
+
 /**********************************************************************************************************
 *	void CreatePillars
 *		Purpose:	Finds all walls within the dungeon layout and checks to see if they should be pillars.
@@ -477,15 +570,17 @@ void DungeonLayout::CreateOutsideCorners()
 {
 	if (m_dungeonLayout != nullptr)
 	{
-		for (int y = 0; y < m_dungeonDimensions.Y; y++)
+		for (int i = 0; i < m_floors.Num(); i++)
 		{
-			for (int x = 0; x < m_dungeonDimensions.X; x++)
+			int x = m_floors[i].tileLocation.X;
+			int y = m_floors[i].tileLocation.Y;
+
+			bool isOutsideCorner = SolveOutsideCornerTile(x, y);
+
+			if (isOutsideCorner)
 			{
-				// If the tile is a floor tile.
-				if (m_dungeonLayout[y][x].tileType == floorTile)
-				{
-					SolveOutsideCornerTile(x, y);
-				}
+				m_outsideCorners.Add(m_dungeonLayout[y][x]);
+				m_floors.RemoveAt(i);
 			}
 		}
 	}
@@ -503,15 +598,17 @@ void DungeonLayout::CreateInsideCorners()
 {
 	if (m_dungeonLayout != nullptr)
 	{
-		for (int y = 0; y < m_dungeonDimensions.Y; y++)
+		for (int i = 0; i < m_walls.Num(); i++)
 		{
-			for (int x = 0; x < m_dungeonDimensions.X; x++)
+			int x = m_walls[i].tileLocation.X;
+			int y = m_walls[i].tileLocation.Y;
+
+			bool isInsideCorner = SolveInsideCornerTile(x, y);
+			
+			if (isInsideCorner)
 			{
-				// If the tile is a floor tile.
-				if (m_dungeonLayout[y][x].tileType == wallTile)
-				{
-					SolveInsideCornerTile(x, y);
-				}
+				m_insideCorners.Add(m_dungeonLayout[y][x]);
+				m_walls.RemoveAt(i);
 			}
 		}
 	}
@@ -1397,6 +1494,7 @@ void DungeonLayout::ClearDungeonLayout()
 		for (int x = 0; x < m_dungeonDimensions.X; x++)
 		{
 			m_dungeonLayout[y][x] = blankTile;
+			m_dungeonLayout[y][x].tileLocation = FVector2D(x, y);
 		}
 	}
 }
@@ -1451,6 +1549,17 @@ void DungeonLayout::CreateFloorQuad(Quad Room)
 	}
 }
 /**********************************************************************************************************
+*	void CleanUpErosion()
+*		Purpose:	Scans all floor tiles for any tiles that cannot be solved due to the random nature of
+*					erosion. Those tiles are replaced with empties.
+*
+*		Changes:
+*			m_dungeonLayout - Unsolvable floor tiles will be replaced with empties.
+**********************************************************************************************************/
+void DungeonLayout::CleanUpErosion()
+{
+}
+/**********************************************************************************************************
 *	bool SolveWallTile(int XPositon, int YPosition)
 *		Purpose:	Checks to see if the tile at the given position is a floor tile and is contacting at
 *					least one empty tile or the map edge. If these are true, The tile is changed to a wall
@@ -1481,14 +1590,12 @@ bool DungeonLayout::SolveWallTile(int XPosition, int YPosition)
 
 	if (!inBounds)
 		return false;
-
-	// Make sure the tile is a floor tile.
-	if (m_dungeonLayout[YPosition][XPosition].tileType != floorTile)
-		return false;
 	
 	TileData newWall = TileData();
 
 	newWall.tileType = wallTile;
+
+	newWall.tileLocation = FVector2D(XPosition, YPosition);
 
 	// Get surrounding tile data.
 	for (int y = -1; y <= 1; y++)

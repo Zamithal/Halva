@@ -13,6 +13,15 @@ AProceduralDungeon::AProceduralDungeon()
 	PrimaryActorTick.bCanEverTick = true;
 
 	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("Procedural Dungeon Root"));
+
+	randomSeed = 0;
+	dungeonSize = FVector(10, 10, 0);
+	smallestRoomSize = FVector(4, 4, 0);
+	desiredRooms = 1;
+	pathWidth = 3;
+	tileDimensions = FVector(10, 10, 0);
+	erosionPasses = 0;
+	erosionChance = 0;
 }
 
 // Called when the game starts or when spawned
@@ -52,7 +61,7 @@ void AProceduralDungeon::GenerateTiles()
 {
 	InitializeTileArrays();
 
-	m_dungeonLayout = DungeonLayout(dungeonSize, smallestRoomSize, desiredRooms, pathWidth, m_randomStream);
+	m_dungeonLayout = DungeonLayout(dungeonSize, smallestRoomSize, desiredRooms, pathWidth, erosionPasses, erosionChance, m_randomStream);
 
 	CreateTileMeshes();
 }
