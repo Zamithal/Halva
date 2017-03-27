@@ -125,6 +125,8 @@ QuadTreeNode::~QuadTreeNode()
 	{
 		if (m_children[i] != nullptr)
 			delete(m_children[i]);
+
+		m_children[i] = nullptr;
 	}
 }
 /**********************************************************************************************************

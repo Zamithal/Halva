@@ -55,17 +55,8 @@
 *		void ErodeRoomLayout()
 *			Causes the edges of rooms and paths to be replaced with floors in a random fashion. This
 *			allows rooms generated to look more natural than perfect rectangles if desired.
-*		void CreateWalls()
-*			Generates walls around the rooms and paths in the dungeon layout. This will result in a few
-*			errors that can be fixed by running the remaining create functions.
-*		void CreatePillars()
-*			Generates a pillar where ever there is a wall completely surrounded by only floors.
-*		void CreateOutsideCorners()
-*			Replaces floors with outside corners where they are needed. These are commonly found where a
-*			path merges with a room.
-*		void CreateInsideCorners()
-*			Replaces walls with inside corners where they are needed. These are at the corners of every
-*			room.
+*		void CreateTiles()
+*			Scans over each tile and picks the tile that best solves the scenario.
 *		int CountRooms()
 *			Counts all rooms in the dungeon.
 *		TArray<Quad> GetListOfAllRooms()
@@ -104,18 +95,8 @@
 *		void CreateFloorQuad(Quad Room)
 *			All array elements in the dungeon layout that are contained within Room are changed to floor
 *			tiles.
-*		void CleanUpErosion()
-*			Checks the map for unsolvable floor tiles and replaces them with empties.
-*		bool SolveWallTile(int XPosition, int YPosition)
-*			Determines if the tile at the given position should be a wall tile or not. If it should be,
-*			also determines the rotation it should face. The tile is then assigned the type of wall tile
-*			and given the rotation. Return true on successful assignment, false on failure.
-*		bool SolveOutsideCornerTile(int XPosition, int YPosition)
-*			Determines if the tile at the given position should be a corner or not. If it should, that
-*			tile is replaced with an outside corner and reoriented to fit the requirements.
-*		bool SolveInsideCornerTile(int XPosition, int YPosition)
-*			Checks if the tile at the given position should be an inside corner. If so, replaces that tile
-*			with an inside corner.
+*		TileData SolveTile(int XPositon, int YPosition, TileData& TileOut)
+*			Determines the type of tile and the rotation of the tile needed to complete the dungeon wall.
 *		int CountRoomsRecursive(QuadTreeRoot * CurrentNode)
 *			Counts all rooms below this in the tree including this node.
 *		TArray<Quad> GetListOfAllRoomsRecursive(QuadTreeRoot * CurrentNode)
@@ -148,18 +129,6 @@
 *			The number of times to attempt to replace edges with floor, making the room appear jagged.
 *		float m_erosionChance
 *			The chance of a wall being replaced with a floor on an erosion pass.
-*		TLinkedList<TileData> m_empties
-*			A list of all empty tiles in the map.
-*		TLinkedList<TileData> m_floors
-*			A list of all floor tiles in the map.
-*		TLinkedList<TileData> m_walls
-*			A list of all wall tiles in the map.
-*		TLinkedList<TileData> m_insideCorners
-*			A list of all insideCorner tiles in the map.
-*		TLinkedList<TileData> m_outsideCorners
-*			A list of all outsideCorner tiles in the map.
-*		TLinkedList<TileData> m_pillars
-*			A list of all pillar tiles in the map.
 **********************************************************************************************************/
 class HALVA_API DungeonLayout
 {
@@ -195,11 +164,8 @@ private:
 	void DropRooms();
 	void GeneratePaths();
 	void CreateRoomLayout();
-	void CreateWalls();
+	void CreateTiles();
 	void ErodeRoomLayout();
-	void CreatePillars();
-	void CreateOutsideCorners();
-	void CreateInsideCorners();
 
 	// Helper functions
 	void GenerateRoomRecursive(QuadTreeNode * CurrentNode);
@@ -215,10 +181,7 @@ private:
 	FVector FindCenterOfClosestEdge(Quad Room, FVector Point);
 	void ClearDungeonLayout();
 	void CreateFloorQuad(Quad Room);
-	void CleanUpErosion();
-	bool SolveWallTile(int XPosition, int YPosition);
-	bool SolveOutsideCornerTile(int XPosition, int YPosition);
-	bool SolveInsideCornerTile(int XPosition, int YPosition);
+	bool SolveTile(int XPosition, int YPosition, TileData& TileOut);
 	int CountRoomsRecursive(QuadTreeNode * CurrentNode);
 	TArray<Quad> GetListOfAllRoomsRecursive(QuadTreeNode * CurrentNode);
 
@@ -234,11 +197,4 @@ private:
 	int m_erosionPasses;
 	float m_erosionChance;
 	FRandomStream m_randomStream;
-
-	TArray<TileData> m_empties;
-	TArray<TileData> m_floors;
-	TArray<TileData> m_walls;
-	TArray<TileData> m_insideCorners;
-	TArray<TileData> m_outsideCorners;
-	TArray<TileData> m_pillars;
 };

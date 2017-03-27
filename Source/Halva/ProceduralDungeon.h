@@ -45,28 +45,14 @@
 *			How big each tile is in unreal units. Affects spacing of each tile.
 *		TArray<class UStaticMesh *> EmptyTiles
 *			An array containing a list of all the types of tiles that could be used when an empty tile is 
-*			required.
-*		TArray<class UStaticMesh *> floorTiles
-*			An array containing a list of all the types of tiles that could be used when an floor tile is
-*			required.
-*		TArray<class UStaticMesh *> wallTiles
-*			An array containing a list of all the types of tiles that could be used when an wall tile is
-*			required.
-*		TArray<class UStaticMesh *> outsideCornerTiles
-*			An array containing a list of all the types of tiles that could be used when an outside corner 
-*			tile is required.
-*		TArray<class UStaticMesh *> insideCornerTiles
-*			An array containing a list of all the types of tiles that could be used when an inside corner
-*			tile is required.
-*		int const NUMBER_OF_TILE_TYPES
-*			The number of different tile types there are.
+*			required. There is one for each type of tile.
 *		TArray<UInstancedStaticMeshComponent *> tileMeshes[]
-*			Contains an TArray for each type of tile. to find any given tile use tileMesh[TileType][x].
+*			Contains all actual static meshes used to build the level.
+*		FRandomStream m_randomStream
+*			The random stream used to generate randomization for the dungeon.
 *		DungeonLayout m_dungeonLayout
 *			Contains the layout information for the dungeon.
 **********************************************************************************************************/
-int const NUMBER_OF_TILE_TYPES = 5;
-
 UCLASS()
 class HALVA_API AProceduralDungeon : public AActor
 {
@@ -103,29 +89,55 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DungeonLayout")
 		float erosionChance;
 
-	// UE4 Does not allow nested containers to interact with blueprints.
-	// Because of this parallel arrays will be used instead of nested arrays.
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tiles")
-		TArray<class UStaticMesh *> emptyTileTypes;
+	// Parallel arrays are used for user entering data's convenience.
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tiles")
-		TArray<class UStaticMesh *> floorTileTypes;
+		TArray<class UStaticMesh *> emptyTiles;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tiles")
-		TArray<class UStaticMesh *> wallTileTypes;
+		TArray<class UStaticMesh *> floorTiles;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tiles")
-		TArray<class UStaticMesh *> insideCornerTileTypes;
+		TArray<class UStaticMesh *> singleWallTiles;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tiles")
-		TArray<class UStaticMesh *> outsideCornerTileTypes;
+		TArray<class UStaticMesh *> doubleWallTiles;
 
-	TArray<UInstancedStaticMeshComponent *> tileMeshes[NUMBER_OF_TILE_TYPES];
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tiles")
+		TArray<class UStaticMesh *> tripleWallTiles;
 
-private:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tiles")
+		TArray<class UStaticMesh *> outsideCornerTiles;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tiles")
+		TArray<class UStaticMesh *> singleInsideCornerTiles;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tiles")
+		TArray<class UStaticMesh *> doubleAdjacentInsideCornerTiles;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tiles")
+		TArray<class UStaticMesh *> doubleOppositeInsideCornerTiles;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tiles")
+		TArray<class UStaticMesh *> tripleInsideCornerTiles;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tiles")
+		TArray<class UStaticMesh *> quadraInsideCornerTiles;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tiles")
+		TArray<class UStaticMesh *> pillarTiles;
+
+	
+
+protected:
+
+	TArray<UInstancedStaticMeshComponent *> m_tileMeshes[TileType::TileType_MAX];
+	
+	TArray<class UStaticMesh*> m_TILE_TYPE_CONTAINER[TileType::TileType_MAX];
 
 	void InitializeTileArrays();
 	void CreateTileMeshes();
+
 	FRandomStream m_randomStream;
 	DungeonLayout m_dungeonLayout;
 

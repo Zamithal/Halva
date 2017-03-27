@@ -9,10 +9,19 @@ enum TileType
 {
 	emptyTile,
 	floorTile,
-	wallTile,
+	oneSidedWallTile,
+	twoSidedWallTile,
+	threeSidedWallTile,
 	outsideCornerTile,
-	insideCornerTile,
-	pillarTile
+	insideSingleCornerTile,
+	insideDoubleAdjacentCornerTile,
+	insideDoubleOppositeCornerTile,
+	insideTripleCornerTile,
+	insideQuadraCornerTile,
+	pillarTile,
+
+	// The number of tile types there are.
+	TileType_MAX
 };
 /**********************************************************************************************************
 *	struct TileData
