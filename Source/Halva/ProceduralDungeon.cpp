@@ -92,18 +92,18 @@ void AProceduralDungeon::InitializeTileArrays()
 
 	// reformats the parallel arrays into a much more workable format.
 	// NOTE: This is only safe as long as parallel array values never change.
-	m_TILE_TYPE_CONTAINER[0] = emptyTiles;
-	m_TILE_TYPE_CONTAINER[1] = floorTiles;
-	m_TILE_TYPE_CONTAINER[2] = singleWallTiles;
-	m_TILE_TYPE_CONTAINER[3] = doubleWallTiles;
-	m_TILE_TYPE_CONTAINER[4] = tripleWallTiles;
-	m_TILE_TYPE_CONTAINER[5] = outsideCornerTiles;
-	m_TILE_TYPE_CONTAINER[6] = singleInsideCornerTiles;
-	m_TILE_TYPE_CONTAINER[7] = doubleAdjacentInsideCornerTiles;
-	m_TILE_TYPE_CONTAINER[8] = doubleOppositeInsideCornerTiles;
-	m_TILE_TYPE_CONTAINER[9] = tripleInsideCornerTiles;
-	m_TILE_TYPE_CONTAINER[10] = quadraInsideCornerTiles;
-	m_TILE_TYPE_CONTAINER[11] = pillarTiles;
+	m_TILE_TYPE_CONTAINER[TileType::emptyTile] = emptyTiles;
+	m_TILE_TYPE_CONTAINER[TileType::floorTile] = floorTiles;
+	m_TILE_TYPE_CONTAINER[TileType::oneSidedWallTile] = singleWallTiles;
+	m_TILE_TYPE_CONTAINER[TileType::twoSidedWallTile] = doubleWallTiles;
+	m_TILE_TYPE_CONTAINER[TileType::threeSidedWallTile] = tripleWallTiles;
+	m_TILE_TYPE_CONTAINER[TileType::outsideCornerTile] = outsideCornerTiles;
+	m_TILE_TYPE_CONTAINER[TileType::insideSingleCornerTile] = singleInsideCornerTiles;
+	m_TILE_TYPE_CONTAINER[TileType::insideDoubleAdjacentCornerTile] = doubleAdjacentInsideCornerTiles;
+	m_TILE_TYPE_CONTAINER[TileType::insideDoubleOppositeCornerTile] = doubleOppositeInsideCornerTiles;
+	m_TILE_TYPE_CONTAINER[TileType::insideTripleCornerTile] = tripleInsideCornerTiles;
+	m_TILE_TYPE_CONTAINER[TileType::insideQuadraCornerTile] = quadraInsideCornerTiles;
+	m_TILE_TYPE_CONTAINER[TileType::pillarTile] = pillarTiles;
 
 
 	for (int i = 0; i < TileType::TileType_MAX; i++)
@@ -112,6 +112,8 @@ void AProceduralDungeon::InitializeTileArrays()
 		{
 			// create container.
 			m_tileMeshes[i].Add(NewObject<UInstancedStaticMeshComponent>(this));
+
+			m_tileMeshes[i][j]->bCastDynamicShadow = false;
 
 			if (m_TILE_TYPE_CONTAINER[i][j] != nullptr)
 				m_tileMeshes[i][j]->SetStaticMesh(m_TILE_TYPE_CONTAINER[i][j]);

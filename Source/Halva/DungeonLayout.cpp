@@ -422,6 +422,9 @@ void DungeonLayout::ErodeRoomLayout()
 	if (m_erosionPasses == 0 || m_erosionChance == 0)
 		return;
 
+	// edges cannot be eroded.
+	bool edge = false;
+
 	// for each pass
 	for (int pass = 0; pass < m_erosionPasses; pass++)
 	{
@@ -429,12 +432,14 @@ void DungeonLayout::ErodeRoomLayout()
 		{
 			for (int x = 0; x < m_dungeonDimensions.X; x++)
 			{
+				edge = false;
+
 				int adjacentFloorTiles = 0;
 
 				// Check adjacent tiles for floor tile count
-				for (int adjY = -1; adjY <= 1; adjY++)
+				for (int adjY = -1; adjY <= 1 && !edge; adjY++)
 				{
-					for (int adjX = -1; adjX <= 1; adjX++)
+					for (int adjX = -1; adjX <= 1 && !edge; adjX++)
 					{
 						// XOR - get tiles adjacent to the center.
 						if ((adjX != 0) != (adjY != 0))
@@ -445,13 +450,15 @@ void DungeonLayout::ErodeRoomLayout()
 								if (m_dungeonLayout[y + adjY][x + adjX].tileType == floorTile)
 									adjacentFloorTiles++;
 							}
+							else
+								edge = true;
 						}
 					}
 				}
 
 				// The more floor tiles the tile is touching, the more likely it is to be
 				// eroded. This will cause a more rounder look.
-				if (m_randomStream.FRand() * 100 < m_erosionChance * adjacentFloorTiles)
+				if (!edge && m_randomStream.FRand() * 100 < m_erosionChance * adjacentFloorTiles)
 				{
 					m_dungeonLayout[y][x].tileType = floorTile;
 					m_dungeonLayout[y][x].tileRotation = FRotator::ZeroRotator;
@@ -1535,7 +1542,7 @@ bool DungeonLayout::SolveTile(int X, int Y, TileData& TileOut)
 
 		float angle = FMath::Atan2(adjFloors[0].Y, adjFloors[0].X);
 
-		TileOut.tileRotation = FRotator(0,0, FMath::RadiansToDegrees(angle));
+		TileOut.tileRotation = FRotator(0, -FMath::RadiansToDegrees(angle), 0);
 
 		return true;
 	}
@@ -1548,7 +1555,7 @@ bool DungeonLayout::SolveTile(int X, int Y, TileData& TileOut)
 		// Set the angle to the floor tile across from the other tile.
 		float angle = FMath::Atan2(-adjOthers[0].Y, -adjOthers[0].X);
 
-		TileOut.tileRotation = FRotator(0, 0, FMath::RadiansToDegrees(angle));
+		TileOut.tileRotation = FRotator(0, -FMath::RadiansToDegrees(angle), 0);
 
 		return true;
 	}
@@ -1563,7 +1570,7 @@ bool DungeonLayout::SolveTile(int X, int Y, TileData& TileOut)
 
 			float angle = FMath::Atan2(adjFloors[0].Y, adjFloors[0].X);
 
-			TileOut.tileRotation = FRotator(0, 0, FMath::RadiansToDegrees(angle));
+			TileOut.tileRotation = FRotator(0, -FMath::RadiansToDegrees(angle), 0);
 
 			return true;
 		}
@@ -1573,13 +1580,22 @@ bool DungeonLayout::SolveTile(int X, int Y, TileData& TileOut)
 			TileOut.tileType = TileType::outsideCornerTile;
 
 			float angle0 = FMath::Atan2(adjFloors[0].Y, adjFloors[0].X);
+			if (angle0 < 0)
+				angle0 += 2.0F * PI;
+
 			float angle1 = FMath::Atan2(adjFloors[1].Y, adjFloors[1].X);
+			if (angle1 < 0)
+				angle1 += 2.0F * PI;
+
+			float test1 = FMath::Fmod(angle1, 2.0F * PI);
+			float test2 = FMath::Fmod(angle0 + (PI / 2.0F), 2.0F * PI);
+			float test3 = FMath::Fmod(angle0, 2.0F * PI);
 
 			// Find the clockwise-most leg of the right triangle the two angles form.
 			if (angle1 == FMath::Fmod(angle0 + (PI / 2.0F), 2.0F * PI))
-				TileOut.tileRotation = FRotator(0, 0, FMath::RadiansToDegrees(angle0));
+				TileOut.tileRotation = FRotator(0, -FMath::RadiansToDegrees(angle0), 0);
 			else
-				TileOut.tileRotation = FRotator(0, 0, FMath::RadiansToDegrees(angle1));
+				TileOut.tileRotation = FRotator(0, -FMath::RadiansToDegrees(angle1), 0);
 
 			return true;
 		}
@@ -1597,18 +1613,18 @@ bool DungeonLayout::SolveTile(int X, int Y, TileData& TileOut)
 			TileOut.tileType = TileType::insideSingleCornerTile;
 			// subtract pi/4 for the clockwise-most leg.
 			float angle = FMath::Atan2(cornerFloors[0].Y, cornerFloors[0].X) - PI / 4;
-			TileOut.tileRotation = FRotator(0, 0, FMath::RadiansToDegrees(angle));
+			TileOut.tileRotation = FRotator(0, -FMath::RadiansToDegrees(angle), 0);
 			break;
 		}
 		// Double corner
 		case 2:
 		{
 			// Opposite inside double corner.
-			if (cornerFloors[0].X + cornerFloors[1].X == 0)
+			if (cornerFloors[0].X + cornerFloors[1].X == 0 && cornerFloors[0].Y + cornerFloors[1].Y == 0)
 			{
 				TileOut.tileType = TileType::insideDoubleOppositeCornerTile;
 				float angle = FMath::Atan2(cornerFloors[0].Y, cornerFloors[0].X) - PI / 4;
-				TileOut.tileRotation = FRotator(0, 0, FMath::RadiansToDegrees(angle));
+				TileOut.tileRotation = FRotator(0, -FMath::RadiansToDegrees(angle), 0);
 			}
 			// Adjacent inside double corner.
 			else
@@ -1616,13 +1632,17 @@ bool DungeonLayout::SolveTile(int X, int Y, TileData& TileOut)
 				TileOut.tileType = TileType::insideDoubleAdjacentCornerTile;
 
 				float angle0 = FMath::Atan2(cornerFloors[0].Y, cornerFloors[0].X);
+				if (angle0 < 0)
+					angle0 += 2.0F * PI;
 				float angle1 = FMath::Atan2(cornerFloors[1].Y, cornerFloors[1].X);
+				if (angle1 < 0)
+					angle1 += 2.0F * PI;
 
 				// Find the clockwise-most leg of the right triangle the two angles form.
 				if (angle1 == FMath::Fmod(angle0 + (PI / 2.0F), 2.0F * PI))
-					TileOut.tileRotation = FRotator(0, 0, FMath::RadiansToDegrees(angle0 - PI / 4));
+					TileOut.tileRotation = FRotator(0, -FMath::RadiansToDegrees(angle0 - PI / 4), 0);
 				else
-					TileOut.tileRotation = FRotator(0, 0, FMath::RadiansToDegrees(angle1 - PI / 4));
+					TileOut.tileRotation = FRotator(0, -FMath::RadiansToDegrees(angle1 - PI / 4), 0);
 			}
 			break;
 		}
@@ -1632,6 +1652,7 @@ bool DungeonLayout::SolveTile(int X, int Y, TileData& TileOut)
 			TileOut.tileType = TileType::insideTripleCornerTile;
 			// subtract pi/4 for the clockwise-most leg.
 			float angle = FMath::Atan2(-cornerOthers[0].Y, -cornerOthers[0].X) - PI / 4;
+			TileOut.tileRotation = FRotator(0, -FMath::RadiansToDegrees(angle), 0);
 			break;
 		}
 		// Quadra corner.
