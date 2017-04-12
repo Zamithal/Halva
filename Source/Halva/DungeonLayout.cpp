@@ -1535,16 +1535,51 @@ bool DungeonLayout::SolveTile(int X, int Y, TileData& TileOut)
 		return true;
 	}
 
-	// 1 sided wall.
+	// 1 sided wall or T junction or Wall corner composite
 	else if (adjFloors.Num() == 1)
 	{
+
 		TileOut.tileType = TileType::oneSidedWallTile;
+		float angle = FMath::RadiansToDegrees(FMath::Atan2(adjFloors[0].Y, adjFloors[0].X));
 
-		float angle = FMath::Atan2(adjFloors[0].Y, adjFloors[0].X);
+		angle = FMath::RoundToFloat(angle);
 
-		TileOut.tileRotation = FRotator(0, -FMath::RadiansToDegrees(angle), 0);
+		if (angle < 0)
+			angle += 360;
 
+		TileOut.tileRotation = FRotator(0, -angle, 0);
+		
+		for (int i = 0; i < cornerFloors.Num(); i++)
+		{
+			float cornerFloorAngle = FMath::RadiansToDegrees(FMath::Atan2(cornerFloors[i].Y, cornerFloors[i].X));
+
+			cornerFloorAngle = FMath::RoundToFloat(cornerFloorAngle);
+
+			if (cornerFloorAngle < 0)
+				cornerFloorAngle += 360;
+			
+			if (cornerFloorAngle == FMath::Fmod(angle + 135, 360))
+			{
+				if (TileOut.tileType == TileType::oneSidedWallTile)
+					TileOut.tileType = TileType::wallCornerCompositeTile;
+				else
+					TileOut.tileType = TileType::tJuctionTile;
+			}
+			else if (cornerFloorAngle == FMath::Fmod(angle + 225, 360))
+			{
+				if (TileOut.tileType == TileType::oneSidedWallTile)
+					TileOut.tileType = TileType::wallCornerCompositeReversedTile;
+				else
+					TileOut.tileType = TileType::tJuctionTile;
+			}
+
+		}
+
+		
 		return true;
+
+
+
 	}
 
 	// 3 sided wall.
@@ -1560,7 +1595,7 @@ bool DungeonLayout::SolveTile(int X, int Y, TileData& TileOut)
 		return true;
 	}
 
-	// Outside corner or 2 sided wall.
+	// Outside corner or 2 sided wall or L bend.
 	else if (adjFloors.Num() == 2)
 	{
 		// 2 sided wall.
@@ -1574,10 +1609,22 @@ bool DungeonLayout::SolveTile(int X, int Y, TileData& TileOut)
 
 			return true;
 		}
-		// Outside corner.
+		// Outside corner or L Bend.
 		else
 		{
 			TileOut.tileType = TileType::outsideCornerTile;
+
+			for (int i = 0; i < cornerFloors.Num(); i++)
+			{
+				// if there is a corner floor opposite the two legs
+				if (cornerFloors[i].X == -(adjFloors[0].X + adjFloors[1].X) &&
+					cornerFloors[i].Y == -(adjFloors[0].Y + adjFloors[1].Y))
+				{
+					// This is an L bend.
+					TileOut.tileType = TileType::lBendTile;
+					break;
+				}
+			}
 
 			float angle0 = FMath::Atan2(adjFloors[0].Y, adjFloors[0].X);
 			if (angle0 < 0)
@@ -1586,10 +1633,6 @@ bool DungeonLayout::SolveTile(int X, int Y, TileData& TileOut)
 			float angle1 = FMath::Atan2(adjFloors[1].Y, adjFloors[1].X);
 			if (angle1 < 0)
 				angle1 += 2.0F * PI;
-
-			float test1 = FMath::Fmod(angle1, 2.0F * PI);
-			float test2 = FMath::Fmod(angle0 + (PI / 2.0F), 2.0F * PI);
-			float test3 = FMath::Fmod(angle0, 2.0F * PI);
 
 			// Find the clockwise-most leg of the right triangle the two angles form.
 			if (angle1 == FMath::Fmod(angle0 + (PI / 2.0F), 2.0F * PI))

@@ -127,7 +127,17 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tiles")
 		TArray<class UStaticMesh *> pillarTiles;
 
-	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tiles")
+		TArray<class UStaticMesh *> lBendTiles;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tiles")
+		TArray<class UStaticMesh *> tJunctionTiles;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tiles")
+		TArray<class UStaticMesh *> wallCornerCompositeTiles;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tiles")
+		TArray<class UStaticMesh *> wallCornerCompositeReversedTiles;
 
 protected:
 

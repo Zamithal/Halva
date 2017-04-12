@@ -19,6 +19,10 @@ enum TileType
 	insideTripleCornerTile,
 	insideQuadraCornerTile,
 	pillarTile,
+	lBendTile,
+	tJuctionTile,
+	wallCornerCompositeTile,
+	wallCornerCompositeReversedTile,
 
 	// The number of tile types there are.
 	TileType_MAX

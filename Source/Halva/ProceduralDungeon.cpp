@@ -104,7 +104,10 @@ void AProceduralDungeon::InitializeTileArrays()
 	m_TILE_TYPE_CONTAINER[TileType::insideTripleCornerTile] = tripleInsideCornerTiles;
 	m_TILE_TYPE_CONTAINER[TileType::insideQuadraCornerTile] = quadraInsideCornerTiles;
 	m_TILE_TYPE_CONTAINER[TileType::pillarTile] = pillarTiles;
-
+	m_TILE_TYPE_CONTAINER[TileType::lBendTile] = lBendTiles;
+	m_TILE_TYPE_CONTAINER[TileType::tJuctionTile] = tJunctionTiles;
+	m_TILE_TYPE_CONTAINER[TileType::wallCornerCompositeTile] = wallCornerCompositeTiles;
+	m_TILE_TYPE_CONTAINER[TileType::wallCornerCompositeReversedTile] = wallCornerCompositeReversedTiles;
 
 	for (int i = 0; i < TileType::TileType_MAX; i++)
 	{
