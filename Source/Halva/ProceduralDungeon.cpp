@@ -121,8 +121,10 @@ void AProceduralDungeon::InitializeTileArrays()
 			if (m_TILE_TYPE_CONTAINER[i][j] != nullptr)
 				m_tileMeshes[i][j]->SetStaticMesh(m_TILE_TYPE_CONTAINER[i][j]);
 
-			// register container.
+			// Set up container for use.
 			m_tileMeshes[i][j]->AttachToComponent(GetRootComponent(), FAttachmentTransformRules::KeepRelativeTransform);
+			m_tileMeshes[i][j]->bGenerateOverlapEvents = true;
+			m_tileMeshes[i][j]->SetCollisionObjectType(ECollisionChannel::ECC_WorldStatic);
 			m_tileMeshes[i][j]->RegisterComponent();
 		}
 	}
